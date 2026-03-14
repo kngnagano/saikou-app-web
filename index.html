@@ -2377,6 +2377,48 @@
   </div>
 
   <!-- ===== ✅ アイテム購入確認モーダル（汎用） ===== -->
+  <!-- ===== アイテム獲得演出 ===== -->
+  <div id="itemAcquiredModal" class="hidden fixed inset-0 z-[500] flex items-center justify-center" style="background:rgba(0,0,0,0.92);backdrop-filter:blur(16px);" onclick="closeItemAcquiredModal()">
+    <div style="text-align:center;padding:2.5rem 2rem;max-width:340px;" onclick="event.stopPropagation()">
+      <div id="itemAcquiredIcon" style="font-size:5rem;margin-bottom:1rem;display:block;animation:levelUpPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);">⚡</div>
+      <p style="font-size:0.62rem;font-weight:800;color:#b39dff;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:0.5rem;">アイテム獲得！</p>
+      <h2 id="itemAcquiredName" style="font-size:1.4rem;font-weight:900;color:#f0f4ff;margin-bottom:0.25rem;"></h2>
+      <p id="itemAcquiredQty" style="font-family:'Poppins',sans-serif;font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#ffd700,#ff8c42);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.5rem;"></p>
+      <p id="itemAcquiredDesc" style="font-size:0.78rem;color:#8ba0c0;margin-bottom:1.5rem;line-height:1.6;"></p>
+      <p style="font-size:0.7rem;color:#b39dff;margin-bottom:1.5rem;">🎒 インベントリに追加されました</p>
+      <button onclick="closeItemAcquiredModal()" style="padding:0.75rem 2.5rem;border-radius:99px;background:linear-gradient(135deg,#7c6aff,#00f5ff);color:white;font-weight:900;font-size:0.9rem;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(124,106,255,0.4);">OK</button>
+    </div>
+  </div>
+
+  <!-- ===== 🎒 インベントリモーダル ===== -->
+  <div id="inventoryModal" class="hidden fixed inset-0 z-[360] flex items-center justify-center" style="background:rgba(0,0,0,0.88);backdrop-filter:blur(14px);" onclick="if(event.target===this)closeInventoryModal()">
+    <div class="w-full mx-4" style="max-width:400px;background:linear-gradient(160deg,#080d20,#0d1535,#0a1220);border-radius:2rem;border:1.5px solid rgba(124,106,255,0.4);box-shadow:0 20px 60px rgba(124,106,255,0.2);padding:1.75rem;max-height:85vh;overflow-y:auto;" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(124,106,255,0.8),rgba(0,245,255,0.6),transparent);border-radius:2rem 2rem 0 0;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.6rem;filter:drop-shadow(0 0 12px rgba(124,106,255,0.8));">🎒</span>
+          <div>
+            <h2 style="font-size:1.1rem;font-weight:900;color:#f0f4ff;">インベントリ</h2>
+            <p style="font-size:0.62rem;color:#8ba0c0;">所持アイテムを確認・使用</p>
+          </div>
+        </div>
+        <button onclick="closeInventoryModal()" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#8ba0c0;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <div id="inventoryList"></div>
+    </div>
+  </div>
+
+  <!-- ===== ❤️ いいねした人モーダル ===== -->
+  <div id="likersModal" class="hidden fixed inset-0 z-[410] flex items-center justify-center" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);" onclick="if(event.target===this)closeLikersModal()">
+    <div class="w-full mx-4" style="max-width:360px;background:linear-gradient(160deg,#080d20,#0d1535);border-radius:2rem;border:1.5px solid rgba(255,110,180,0.35);box-shadow:0 20px 60px rgba(255,110,180,0.15);padding:1.75rem;max-height:75vh;overflow-y:auto;" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <h3 style="font-size:1rem;font-weight:900;color:#ff6eb4;">❤️ いいねした人</h3>
+        <button onclick="closeLikersModal()" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:#8ba0c0;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <div id="likersList" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>
+
   <div id="itemConfirmModal" class="hidden fixed inset-0 z-[400] flex items-center justify-center" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);" onclick="if(event.target===this)closeItemConfirm()">
     <div class="w-full mx-4" style="max-width:360px;background:linear-gradient(160deg,#080d20,#0d1535,#0a1220);border-radius:2rem;border:1.5px solid rgba(124,106,255,0.4);box-shadow:0 20px 60px rgba(124,106,255,0.2);padding:1.75rem;position:relative;" onclick="event.stopPropagation()">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(124,106,255,0.8),rgba(0,245,255,0.6),transparent);border-radius:2rem 2rem 0 0;"></div>
@@ -2415,9 +2457,12 @@
           <p style="font-size:0.62rem;color:#8ba0c0;letter-spacing:0.05em;">ストーンを使って特典をゲット</p>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:1rem;padding:5px 12px;">
-        <span style="font-size:0.9rem;">💎</span>
-        <span id="shopStoneCount" style="font-family:'Poppins',sans-serif;font-size:0.9rem;font-weight:900;background:linear-gradient(135deg,#00f5ff,#b39dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">0</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:1rem;padding:5px 12px;">
+          <span style="font-size:0.9rem;">💎</span>
+          <span id="shopStoneCount" style="font-family:'Poppins',sans-serif;font-size:0.9rem;font-weight:900;background:linear-gradient(135deg,#00f5ff,#b39dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">0</span>
+        </div>
+        <button onclick="closeShopModal();openInventoryModal();" style="display:flex;align-items:center;gap:4px;background:rgba(124,106,255,0.12);border:1px solid rgba(124,106,255,0.3);border-radius:1rem;padding:5px 10px;color:#b39dff;font-size:0.72rem;font-weight:800;cursor:pointer;">🎒 <span id="shopInvBadge"></span></button>
       </div>
     </div>
 
@@ -2448,7 +2493,7 @@
         <span style="font-weight:900;font-size:0.88rem;color:#b39dff;">ストリーク回復</span>
         <p style="font-size:0.68rem;color:#8ba0c0;line-height:1.5;margin-top:2px;">途切れたストリークを1日分回復<br>10💎消費</p>
       </div>
-      <button onclick="closeShopModal();openStoneRecoveryModal();" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#4a3080,#b39dff);color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(179,157,255,0.3);white-space:nowrap;">
+      <button onclick="handleBuyStreakRecovery()" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#4a3080,#b39dff);color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(179,157,255,0.3);white-space:nowrap;">
         💎 10
       </button>
     </div>
@@ -2477,11 +2522,11 @@
           <span style="font-weight:900;font-size:0.88rem;color:#ff6eb4;">7日ストリーク保険</span>
           <span id="insuranceActiveBadge" style="display:none;font-size:0.55rem;background:linear-gradient(135deg,#ff6eb4,#b39dff);color:white;padding:1px 7px;border-radius:99px;font-weight:900;">発動中</span>
         </div>
-        <p style="font-size:0.68rem;color:#8ba0c0;line-height:1.5;">最大7日連続でさぼってもストリーク維持<br>購入日から7日間有効</p>
+        <p style="font-size:0.68rem;color:#8ba0c0;line-height:1.5;">最大7日連続でさぼってもストリーク維持<br>インベントリに追加→好きなときに使用</p>
         <p id="insuranceStatus" style="font-size:0.65rem;color:#ff6eb4;margin-top:3px;"></p>
       </div>
       <button onclick="handleBuyInsurance()" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#8b0057,#ff6eb4);color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(255,110,180,0.3);white-space:nowrap;">
-        💎 70
+        💎 30
       </button>
     </div>
 
@@ -3283,6 +3328,16 @@
         <input type="file" id="commitPhotoInput" accept="image/*" style="display:none;" onchange="onCommitPhotoSelected(this)"/>
       </div>
 
+      <!-- 公開範囲 -->
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block;font-size:0.65rem;font-weight:800;color:#8ba0c0;letter-spacing:0.12em;margin-bottom:8px;">🌐 公開範囲</label>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="visBtn_all" onclick="setPostVisibility('all')" style="flex:1;padding:0.55rem;border-radius:0.85rem;border:1.5px solid rgba(0,245,255,0.45);background:rgba(0,245,255,0.1);color:#00f5ff;font-size:0.7rem;font-weight:900;cursor:pointer;">🌍 全体</button>
+          <button type="button" id="visBtn_friends" onclick="setPostVisibility('friends')" style="flex:1;padding:0.55rem;border-radius:0.85rem;border:1.5px solid rgba(255,255,255,0.1);background:transparent;color:#8ba0c0;font-size:0.7rem;font-weight:700;cursor:pointer;">👥 フレンド</button>
+          <button type="button" id="visBtn_private" onclick="setPostVisibility('private')" style="flex:1;padding:0.55rem;border-radius:0.85rem;border:1.5px solid rgba(255,255,255,0.1);background:transparent;color:#8ba0c0;font-size:0.7rem;font-weight:700;cursor:pointer;">🔒 自分のみ</button>
+        </div>
+      </div>
+
       <!-- 確定ボタン -->
       <button id="commitPostBtn" onclick="submitCommitPost()" style="
         width:100%;padding:1.1rem;border-radius:1.25rem;margin-bottom:0.75rem;
@@ -3818,6 +3873,208 @@
     }
     // ─── 汎用アイテム確認モーダル ───────────────────────────────
     let _itemConfirmCallback = null;
+    // ===== 🎒 INVENTORY SYSTEM =====
+    function getInventory(userId) {
+      const uid = userId || currentUser?.id;
+      if (!uid) return { xpboost: 0, recovery: 0, insurance: 0 };
+      try { return JSON.parse(localStorage.getItem(`saikou_inv_${uid}`)) || { xpboost: 0, recovery: 0, insurance: 0 }; }
+      catch { return { xpboost: 0, recovery: 0, insurance: 0 }; }
+    }
+    function saveInventory(userId, inv) {
+      localStorage.setItem(`saikou_inv_${userId}`, JSON.stringify(inv));
+    }
+    function addToInventory(userId, type, qty = 1) {
+      const inv = getInventory(userId);
+      inv[type] = (inv[type] || 0) + qty;
+      saveInventory(userId, inv);
+      return inv;
+    }
+    function useFromInventory(userId, type) {
+      const inv = getInventory(userId);
+      if ((inv[type] || 0) <= 0) return false;
+      inv[type] -= 1;
+      saveInventory(userId, inv);
+      return true;
+    }
+    function getTotalInventoryCount(userId) {
+      const inv = getInventory(userId);
+      return (inv.xpboost || 0) + (inv.recovery || 0) + (inv.insurance || 0);
+    }
+
+    // Item acquired animation
+    function showItemAcquired(icon, name, qty, desc) {
+      const m = document.getElementById('itemAcquiredModal');
+      if (!m) return;
+      document.getElementById('itemAcquiredIcon').textContent = icon;
+      document.getElementById('itemAcquiredName').textContent = name;
+      document.getElementById('itemAcquiredQty').textContent = `× ${qty} 獲得`;
+      document.getElementById('itemAcquiredDesc').textContent = desc;
+      m.classList.remove('hidden');
+      if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
+    }
+    function closeItemAcquiredModal() {
+      document.getElementById('itemAcquiredModal')?.classList.add('hidden');
+      _updateShopItemStatus && _updateShopItemStatus();
+      _refreshShopInvBadge();
+    }
+    function _refreshShopInvBadge() {
+      const el = document.getElementById('shopInvBadge');
+      if (!el || !currentUser) return;
+      const n = getTotalInventoryCount(currentUser.id);
+      el.textContent = n > 0 ? `(${n})` : '';
+    }
+    window.closeItemAcquiredModal = closeItemAcquiredModal;
+
+    // ===== INVENTORY MODAL =====
+    function openInventoryModal() {
+      renderInventoryModal();
+      document.getElementById('inventoryModal')?.classList.remove('hidden');
+    }
+    function closeInventoryModal() {
+      document.getElementById('inventoryModal')?.classList.add('hidden');
+    }
+    window.openInventoryModal = openInventoryModal;
+    window.closeInventoryModal = closeInventoryModal;
+
+    function renderInventoryModal() {
+      const listEl = document.getElementById('inventoryList');
+      if (!listEl || !currentUser) return;
+      const inv = getInventory(currentUser.id);
+      const defs = [
+        { type: 'xpboost',  icon: '⚡', name: 'XP 2倍チケット',        desc: '使用から24時間、コミットXPが2倍', color: '#ffd700', useFn: 'handleUseXpBoost' },
+        { type: 'recovery', icon: '🔥', name: 'ストリーク回復チケット', desc: '1枚で失ったストリークを1日分回復',  color: '#b39dff', useFn: 'handleUseRecovery' },
+        { type: 'insurance',icon: '🛡️', name: 'ストリーク保険',         desc: '使用から7日間ストリーク継続',       color: '#ff6eb4', useFn: 'handleUseInsurance' },
+      ];
+      listEl.innerHTML = defs.map(d => {
+        const qty = inv[d.type] || 0;
+        let status = '';
+        if (d.type === 'xpboost' && isXp2xActive(currentUser.id)) {
+          status = `<p style="font-size:0.63rem;color:#ffd700;margin-top:3px;">⚡ 発動中 ${getXp2xExpiryText(currentUser.id)}まで</p>`;
+        }
+        if (d.type === 'insurance' && isInsuranceActive(currentUser.id)) {
+          const exp = localStorage.getItem(`saikou_insurance_${currentUser.id}`);
+          status = `<p style="font-size:0.63rem;color:#ff6eb4;margin-top:3px;">🛡️ 発動中 ${new Date(exp).toLocaleDateString('ja-JP')}まで</p>`;
+        }
+        return `<div style="background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:1.25rem;padding:0.9rem 1rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:12px;">
+          <div style="font-size:2rem;flex-shrink:0;">${d.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+              <span style="font-weight:900;font-size:0.85rem;color:${d.color};">${d.name}</span>
+              <span style="font-family:'Poppins',sans-serif;font-size:0.72rem;font-weight:900;color:#f0f4ff;background:rgba(255,255,255,0.1);padding:1px 8px;border-radius:99px;">× ${qty}</span>
+            </div>
+            <p style="font-size:0.65rem;color:#6b80a0;line-height:1.4;">${d.desc}</p>
+            ${status}
+          </div>
+          <button onclick="${d.useFn}()" ${qty <= 0 ? 'disabled' : ''} style="flex-shrink:0;padding:0.45rem 0.9rem;border-radius:0.85rem;${qty > 0 ? `background:linear-gradient(135deg,rgba(124,106,255,0.4),${d.color});color:white;cursor:pointer;` : 'background:rgba(255,255,255,0.05);color:#4a6080;cursor:not-allowed;'}font-weight:900;font-size:0.72rem;border:none;white-space:nowrap;opacity:${qty > 0 ? '1' : '0.45'};">${qty > 0 ? '使う' : '0個'}</button>
+        </div>`;
+      }).join('');
+      if (!inv.xpboost && !inv.recovery && !inv.insurance) {
+        listEl.innerHTML += `<p style="text-align:center;color:#4a6080;font-size:0.82rem;padding:1.5rem 0;">アイテムがありません。<br>ショップで購入しよう！</p>`;
+      }
+    }
+
+    // ===== ITEM USE HANDLERS =====
+    async function handleUseXpBoost() {
+      if (!currentUser) return;
+      if (!useFromInventory(currentUser.id, 'xpboost')) { showToast('XP 2倍チケットがありません', '#f87171'); return; }
+      if (isXp2xActive(currentUser.id)) {
+        addToInventory(currentUser.id, 'xpboost', 1); // refund
+        showToast('すでにXP2倍チケットが発動中です！', '#ffd700'); return;
+      }
+      localStorage.setItem(`saikou_xp2x_${currentUser.id}`, new Date(Date.now() + 86400000).toISOString());
+      renderInventoryModal(); _updateShopItemStatus && _updateShopItemStatus(); _refreshShopInvBadge();
+      showToast(`⚡ XP2倍チケット発動！${getXp2xExpiryText(currentUser.id)}まで2倍！`, '#ffd700');
+    }
+    async function handleUseInsurance() {
+      if (!currentUser) return;
+      if (!useFromInventory(currentUser.id, 'insurance')) { showToast('ストリーク保険がありません', '#f87171'); return; }
+      if (isInsuranceActive(currentUser.id)) {
+        addToInventory(currentUser.id, 'insurance', 1);
+        showToast('すでにストリーク保険が発動中！', '#ff6eb4'); return;
+      }
+      const exp = new Date(); exp.setDate(exp.getDate() + 7); exp.setHours(23,59,59,999);
+      localStorage.setItem(`saikou_insurance_${currentUser.id}`, exp.toISOString());
+      renderInventoryModal(); _updateShopItemStatus && _updateShopItemStatus(); _refreshShopInvBadge();
+      showToast(`🛡️ 7日保険発動！${exp.toLocaleDateString('ja-JP')}まで有効！`, '#ff6eb4');
+    }
+    async function handleUseRecovery() {
+      if (!currentUser) return;
+      const history = currentUser.history || [];
+      const today = getTodayString();
+      const missed = [];
+      for (let i = 1; i <= 14; i++) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const rec = history.find(h => h.date === ds);
+        if (!rec || !rec.is_committed) missed.push(ds);
+      }
+      if (missed.length === 0) { showToast('回復できる日がありません（14日間すべて達成済み）', '#00ff87'); return; }
+      const target = missed[0];
+      const dateLabel = new Date(target + 'T12:00:00').toLocaleDateString('ja-JP');
+      if (!confirm(`🔥 ストリーク回復チケットを使用しますか？\n${dateLabel} を回復します`)) return;
+      if (!useFromInventory(currentUser.id, 'recovery')) { showToast('ストリーク回復チケットがありません', '#f87171'); return; }
+      try {
+        await supabase.from('daily_status').upsert({ user_id: currentUser.id, date: target, done_count: 3, is_committed: true, recovered_by_stone: true }, { onConflict: 'user_id,date' });
+        const rec = history.find(h => h.date === target);
+        if (!rec) { currentUser.history.unshift({ date: target, done_count: 3, is_committed: true }); currentUser.history.sort((a,b) => b.date.localeCompare(a.date)); }
+        else rec.is_committed = true;
+        const newStreak = calculateStreak(currentUser.history);
+        currentUser.current_streak = newStreak;
+        await supabase.from('users').update({ current_streak: newStreak, last_commit_date: today }).eq('id', currentUser.id);
+        renderInventoryModal(); _refreshShopInvBadge();
+        renderHome(currentUser.history);
+        launchConfetti(60); if (navigator.vibrate) navigator.vibrate([60,40,120]);
+        showToast(`🔥 ${dateLabel} 回復！継続 ${newStreak} 日！`, '#b39dff');
+      } catch(e) {
+        addToInventory(currentUser.id, 'recovery', 1);
+        showToast('回復に失敗しました。チケットを返還しました。', '#f87171');
+      }
+    }
+    window.handleUseXpBoost   = handleUseXpBoost;
+    window.handleUseInsurance  = handleUseInsurance;
+    window.handleUseRecovery   = handleUseRecovery;
+
+    // ===== いいねした人モーダル =====
+    async function showLikers(postId) {
+      const modal = document.getElementById('likersModal');
+      const listEl = document.getElementById('likersList');
+      if (!modal || !listEl) return;
+      listEl.innerHTML = '<p style="color:#8ba0c0;text-align:center;padding:1rem;">読み込み中...</p>';
+      modal.classList.remove('hidden');
+      try {
+        const { data } = await supabase.from('post_likes').select('user_id, created_at').eq('post_id', postId).order('created_at', { ascending: false });
+        if (!data || data.length === 0) { listEl.innerHTML = '<p style="color:#4a6080;text-align:center;padding:1.5rem;">まだいいねはありません</p>'; return; }
+        const uids = data.map(d => d.user_id);
+        const { data: users } = await supabase.from('users').select('id, display_name').in('id', uids);
+        const um = {}; (users || []).forEach(u => { um[u.id] = u; });
+        listEl.innerHTML = data.map(like => {
+          const u = um[like.user_id] || {};
+          const name = escapeHtml(u.display_name || '???');
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c6aff,#ff6eb4);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:900;color:white;flex-shrink:0;">${name.charAt(0)}</div>
+            <div style="flex:1;"><p style="font-weight:700;font-size:0.85rem;color:#f0f4ff;">${name}</p><p style="font-size:0.63rem;color:#4a6080;">${_timeAgo(like.created_at)}</p></div>
+            <span>❤️</span></div>`;
+        }).join('');
+      } catch(e) { listEl.innerHTML = '<p style="color:#f87171;text-align:center;">読み込みに失敗しました</p>'; }
+    }
+    function closeLikersModal() { document.getElementById('likersModal')?.classList.add('hidden'); }
+    window.showLikers       = showLikers;
+    window.closeLikersModal = closeLikersModal;
+
+    // ===== 公開範囲 =====
+    let _postVisibility = 'all';
+    function setPostVisibility(v) {
+      _postVisibility = v;
+      const cfg = { all: { color: '#00f5ff', bg: 'rgba(0,245,255,0.12)', border: 'rgba(0,245,255,0.5)' }, friends: { color: '#b39dff', bg: 'rgba(124,106,255,0.12)', border: 'rgba(124,106,255,0.5)' }, private: { color: '#ff6eb4', bg: 'rgba(255,110,180,0.1)', border: 'rgba(255,110,180,0.45)' } };
+      ['all','friends','private'].forEach(id => {
+        const btn = document.getElementById(`visBtn_${id}`);
+        if (!btn) return;
+        if (id === v) { const c = cfg[id]; btn.style.background = c.bg; btn.style.borderColor = c.border; btn.style.color = c.color; btn.style.fontWeight = '900'; }
+        else { btn.style.background = 'transparent'; btn.style.borderColor = 'rgba(255,255,255,0.1)'; btn.style.color = '#8ba0c0'; btn.style.fontWeight = '700'; }
+      });
+    }
+    window.setPostVisibility = setPostVisibility;
+
     function showItemConfirm(icon, title, desc, cost, onConfirm) {
       const modal = document.getElementById('itemConfirmModal');
       if (!modal) { if (onConfirm) onConfirm(); return; }
@@ -3844,30 +4101,24 @@
       closeItemConfirm();
       if (_itemConfirmCallback) await _itemConfirmCallback();
     }
-    window.closeItemConfirm   = closeItemConfirm;
-    window.execItemConfirm    = execItemConfirm;
-    window.handleBuyXp2x      = handleBuyXp2x;
-    window.handleBuyTaskSlot  = handleBuyTaskSlot;
-    window.handleBuyInsurance = handleBuyInsurance;
+    window.closeItemConfirm       = closeItemConfirm;
+    window.execItemConfirm        = execItemConfirm;
+    window.handleBuyXp2x          = handleBuyXp2x;
+    window.handleBuyTaskSlot      = handleBuyTaskSlot;
+    window.handleBuyInsurance     = handleBuyInsurance;
+    window.handleBuyStreakRecovery = handleBuyStreakRecovery;
 
     async function handleBuyXp2x() {
       if (!currentUser) return;
       const cost = 20;
-      if (isXp2xActive(currentUser.id)) {
-        const expiryText = getXp2xExpiryText(currentUser.id);
-        showToast(`すでにXP2倍チケットが有効です！${expiryText}まで有効`, '#ffd700');
-        return;
-      }
-      showItemConfirm('⚡', 'XP 2倍チケット', '購入から24時間、コミット時のXPが2倍になります。', cost, async () => {
+      showItemConfirm('⚡', 'XP 2倍チケット', 'インベントリに追加。好きなタイミングで使用すると24時間コミットXPが2倍になります。', cost, async () => {
         currentStones -= cost;
         saveStonesLocal(currentUser.id, currentStones);
         await pushStonesToSupabase(currentUser.id, currentStones);
-        const expiry24h = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        localStorage.setItem(`saikou_xp2x_${currentUser.id}`, expiry24h);
-        updateStoneUI();
-        _updateShopItemStatus();
-        const expiryText = getXp2xExpiryText(currentUser.id);
-        showToast(`⚡ XP2倍チケット発動！${expiryText}までコミットで2倍XPゲット！`, '#ffd700');
+        addToInventory(currentUser.id, 'xpboost', 1);
+        updateStoneUI(); _refreshShopInvBadge();
+        closeItemConfirm();
+        showItemAcquired('⚡', 'XP 2倍チケット', 1, '24時間コミットXPが2倍になります');
       });
     }
 
@@ -3924,24 +4175,29 @@
     }
     async function handleBuyInsurance() {
       if (!currentUser) return;
-      const cost = 70;
-      if (isInsuranceActive(currentUser.id)) {
-        const expiry = localStorage.getItem(`saikou_insurance_${currentUser.id}`);
-        const expiryDate = new Date(expiry).toLocaleDateString('ja-JP');
-        showToast(`すでに7日保険が有効です！有効期限: ${expiryDate}`, '#ff6eb4');
-        return;
-      }
-      showItemConfirm('🛡️', '7日ストリーク保険', '今日から7日間、さぼってもストリークが継続します。', cost, async () => {
+      const cost = 30;
+      showItemConfirm('🛡️', '7日ストリーク保険', 'インベントリに追加。使用から7日間、さぼってもストリークが継続します。何枚でもストック可能。', cost, async () => {
         currentStones -= cost;
         saveStonesLocal(currentUser.id, currentStones);
         await pushStonesToSupabase(currentUser.id, currentStones);
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + 7);
-        expiry.setHours(23, 59, 59, 999);
-        localStorage.setItem(`saikou_insurance_${currentUser.id}`, expiry.toISOString());
-        updateStoneUI();
-        _updateShopItemStatus();
-        showToast('🛡️ 7日保険発動！7日間さぼってもストリーク継続！', '#ff6eb4');
+        addToInventory(currentUser.id, 'insurance', 1);
+        updateStoneUI(); _refreshShopInvBadge();
+        closeItemConfirm();
+        showItemAcquired('🛡️', '7日ストリーク保険', 1, '使用から7日間さぼってもストリーク継続！');
+      });
+    }
+
+    async function handleBuyStreakRecovery() {
+      if (!currentUser) return;
+      const cost = 10;
+      showItemConfirm('🔥', 'ストリーク回復チケット', 'インベントリに追加。1枚で失ったストリークを1日分回復できます。複数枚持てば複数日回復可能。', cost, async () => {
+        currentStones -= cost;
+        saveStonesLocal(currentUser.id, currentStones);
+        await pushStonesToSupabase(currentUser.id, currentStones);
+        addToInventory(currentUser.id, 'recovery', 1);
+        updateStoneUI(); _refreshShopInvBadge();
+        closeItemConfirm();
+        showItemAcquired('🔥', 'ストリーク回復チケット', 1, '1枚で失ったストリークを1日分回復できます');
       });
     }
 
@@ -4708,12 +4964,14 @@
 
           <!-- いいね・コメントボタン行 -->
           <div style="display:flex;align-items:center;gap:8px;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);">
-            <button onclick="toggleLike('${post.id}', this)" style="display:flex;align-items:center;gap:4px;padding:4px 12px;border-radius:99px;border:1.5px solid ${isPostLiked(post.id) ? 'rgba(255,110,180,0.7)' : 'rgba(255,110,180,0.25)'};background:${isPostLiked(post.id) ? 'rgba(255,110,180,0.25)' : 'rgba(255,110,180,0.06)'};color:#ff6eb4;font-size:0.78rem;font-weight:800;cursor:pointer;transition:all 0.2s;" data-post-id="${post.id}" data-liked="${isPostLiked(post.id) ? '1' : '0'}">
+            <button onclick="toggleLike('${post.id}', this)" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;border:1.5px solid ${isPostLiked(post.id) ? 'rgba(255,110,180,0.7)' : 'rgba(255,110,180,0.25)'};background:${isPostLiked(post.id) ? 'rgba(255,110,180,0.25)' : 'rgba(255,110,180,0.06)'};color:#ff6eb4;font-size:0.78rem;font-weight:800;cursor:pointer;transition:all 0.2s;" data-post-id="${post.id}" data-liked="${isPostLiked(post.id) ? '1' : '0'}">
               ❤️ <span id="likeCount_${post.id}">${post.likes_count || 0}</span>
             </button>
+            <button onclick="showLikers('${post.id}')" style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:99px;border:1px solid rgba(255,110,180,0.15);background:transparent;color:#4a6080;font-size:0.68rem;font-weight:700;cursor:pointer;" title="いいねした人を見る">👥 見る</button>
             <button onclick="toggleCommentArea('${post.id}')" style="display:flex;align-items:center;gap:4px;padding:4px 12px;border-radius:99px;border:1.5px solid rgba(124,106,255,0.2);background:rgba(124,106,255,0.06);color:#8ba0c0;font-size:0.78rem;font-weight:800;cursor:pointer;transition:all 0.2s;">
               💬 <span id="cmtCount_${post.id}">0</span>
             </button>
+            ${post.visibility && post.visibility !== 'all' ? `<span style="margin-left:auto;font-size:0.62rem;color:#4a6080;">${post.visibility === 'friends' ? '👥' : '🔒'}</span>` : ''}
           </div>
 
           <!-- コメントエリア（折りたたみ） -->
@@ -4800,12 +5058,24 @@
         if (error) throw error;
 
         let filteredPosts = posts || [];
+        let _tlFriendIds = null;
         if (_tlFilter2 === 'friends') {
           const { data: fData } = await supabase.from('friends').select('friend_user_id').eq('user_id', currentUser.id).eq('status', 'approved');
-          const friendIds = new Set((fData || []).map(f => f.friend_user_id));
-          friendIds.add(currentUser.id);
-          filteredPosts = filteredPosts.filter(p => friendIds.has(p.user_id));
+          _tlFriendIds = new Set((fData || []).map(f => f.friend_user_id));
+          _tlFriendIds.add(currentUser.id);
+          filteredPosts = filteredPosts.filter(p => _tlFriendIds.has(p.user_id));
         }
+        // 公開範囲フィルタリング
+        filteredPosts = filteredPosts.filter(p => {
+          const vis = p.visibility || 'all';
+          if (vis === 'private') return p.user_id === currentUser.id;
+          if (vis === 'friends') {
+            if (p.user_id === currentUser.id) return true;
+            if (_tlFriendIds) return _tlFriendIds.has(p.user_id);
+            return true; // allフィルター時は取得後に判定不可のため表示
+          }
+          return true;
+        });
 
         const userIds = [...new Set(filteredPosts.map(p => p.user_id))];
         let usersMap = {}, logsMap = {}, statsMap = {};
@@ -10046,7 +10316,8 @@
                 comment:          commitComment,
                 photo_url:        commitPhotoUrl || null,
                 xp_bonus_applied: !!hasCommitPhoto,
-                likes_count:      0
+                likes_count:      0,
+                visibility:       (typeof _postVisibility !== 'undefined' ? _postVisibility : 'all')
               });
               console.log('[Commit] ✅ post saved');
             } catch(e) { console.warn('[Commit] post save failed:', e); }
