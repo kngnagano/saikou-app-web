@@ -7623,30 +7623,7 @@
 
     // ─── 投稿画面 ────────────────────────────────────────────────
     let _postPhotoFile = null;
-    let _postVisibility = 'public'; // 'public' | 'friends'
-
-    function setPostVisibility(v) {
-      _postVisibility = v;
-      const pubBtn = document.getElementById('visPublicBtn');
-      const frdBtn = document.getElementById('visFriendsBtn');
-      if (!pubBtn || !frdBtn) return;
-      if (v === 'public') {
-        pubBtn.style.background = 'linear-gradient(135deg,rgba(0,245,255,0.2),rgba(124,106,255,0.15))';
-        pubBtn.style.borderColor = 'rgba(0,245,255,0.5)';
-        pubBtn.style.color = '#00f5ff';
-        frdBtn.style.background = 'transparent';
-        frdBtn.style.borderColor = 'rgba(255,255,255,0.1)';
-        frdBtn.style.color = '#4a6080';
-      } else {
-        frdBtn.style.background = 'linear-gradient(135deg,rgba(124,106,255,0.2),rgba(0,245,255,0.15))';
-        frdBtn.style.borderColor = 'rgba(124,106,255,0.5)';
-        frdBtn.style.color = '#b39dff';
-        pubBtn.style.background = 'transparent';
-        pubBtn.style.borderColor = 'rgba(255,255,255,0.1)';
-        pubBtn.style.color = '#4a6080';
-      }
-    }
-    window.setPostVisibility = setPostVisibility;
+    // _postVisibility は上部で宣言済み（重複削除）
 
     function goToPostScreen() {
       document.getElementById('questCompleteScreen').classList.add('hidden');
@@ -7766,7 +7743,7 @@
             user_id: currentUser.id, task_log_id: logData.id,
             comment: comment || null, photo_url: photoUrl,
             xp_bonus_applied: multi > 1.0,
-            visibility: _postVisibility || 'public'
+            visibility: _postVisibility || 'all'
           });
         }
 
@@ -7786,8 +7763,8 @@
     function closePostScreen() {
       document.getElementById('postScreen').classList.add('hidden');
       // 公開範囲をデフォルトにリセット
-      _postVisibility = 'public';
-      setPostVisibility('public');
+      _postVisibility = 'all';
+      setPostVisibility('all');
       // スキップ扱いでXP付与
       if (_questCompleteData) _applyQuestXp(_questCompleteData, 1.0);
     }
