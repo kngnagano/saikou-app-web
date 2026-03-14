@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getUser, getFriends, saveFriends } from "@/lib/storage";
+import { getUserId, loadUser, getFriends, saveFriends } from "@/lib/storage";
 import { Friend } from "@/lib/types";
 import BottomNav from "@/components/BottomNav";
 import ProfileIcon from "@/components/ProfileIcon";
@@ -12,9 +12,11 @@ export default function Invite() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const user = getUser();
-    if (user) {
-      setInviteCode(user.inviteCode);
+    const userId = getUserId();
+    if (userId) {
+      loadUser(userId).then((user) => {
+        if (user) setInviteCode(user.inviteCode);
+      });
     }
   }, []);
 
