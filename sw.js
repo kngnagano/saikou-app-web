@@ -1,9 +1,9 @@
-// Saikou! Service Worker v10.7.0
+// Saikou! Service Worker v10.8.0
+// v10.8.0: キャッシュ強制更新 (v18.6.0対応)
 // v10.7.0: ストーン同期・いいね永続化・レベル表示修正・アイテムモーダル改善 (v18.6.0対応)
 // v10.6.0: 本気の部屋機能削除・タイムライン投稿バグ修正 (v18.5.0対応)
-// v10.5.0: 通知パネル全面書き換え（削除・既読・表示正常化）
 
-const CACHE_NAME  = 'saikou-v10.7.0';
+const CACHE_NAME  = 'saikou-v10.8.0';
 // index.html と sw.js は絶対にキャッシュしない
 const NO_CACHE_URLS = ['/index.html', '/', '/sw.js'];
 const REMINDER_HOUR = 21; // JST 21:00
