@@ -3844,8 +3844,11 @@
       closeItemConfirm();
       if (_itemConfirmCallback) await _itemConfirmCallback();
     }
-    window.closeItemConfirm = closeItemConfirm;
-    window.execItemConfirm  = execItemConfirm;
+    window.closeItemConfirm   = closeItemConfirm;
+    window.execItemConfirm    = execItemConfirm;
+    window.handleBuyXp2x      = handleBuyXp2x;
+    window.handleBuyTaskSlot  = handleBuyTaskSlot;
+    window.handleBuyInsurance = handleBuyInsurance;
 
     async function handleBuyXp2x() {
       if (!currentUser) return;
@@ -4564,7 +4567,7 @@
         if (userIds.length > 0) {
           const { data: statsData } = await supabase
             .from('user_stats')
-            .select('user_id, total_xp, current_title')
+            .select('user_id, total_xp')
             .in('user_id', userIds);
           (statsData || []).forEach(s => { statsMap[s.user_id] = s; });
         }
@@ -4635,7 +4638,7 @@
 
       const userName = escapeHtml(user.display_name || '???');
       const lvl      = stats.total_xp ? calcLevel(stats.total_xp) : 1;
-      const titleBadge = escapeHtml(stats.current_title || '');
+      const titleBadge = escapeHtml(getLevelTitle ? getLevelTitle(lvl) : '');
       const timeAgo  = _timeAgo(post.created_at);
 
       // ── タスク情報ブロック ──
@@ -4823,7 +4826,7 @@
           const authUids = (uRes.data || []).map(u => u.auth_user_id).filter(Boolean);
           const allStatsIds = [...new Set([...userIds, ...authUids])];
           if (allStatsIds.length > 0) {
-            const sRes = await supabase.from('user_stats').select('user_id, total_xp, current_title').in('user_id', allStatsIds);
+            const sRes = await supabase.from('user_stats').select('user_id, total_xp').in('user_id', allStatsIds);
             const authToUserId = {};
             (uRes.data || []).forEach(u => { if (u.auth_user_id) authToUserId[u.auth_user_id] = u.id; });
             (sRes.data || []).forEach(s => {
@@ -4879,7 +4882,7 @@
           const authUids = (uR.data||[]).map(u=>u.auth_user_id).filter(Boolean);
           const allStatsIds = [...new Set([...userIds, ...authUids])];
           if (allStatsIds.length > 0) {
-            const sR = await supabase.from('user_stats').select('user_id,total_xp,current_title').in('user_id',allStatsIds);
+            const sR = await supabase.from('user_stats').select('user_id,total_xp').in('user_id',allStatsIds);
             const authToUid = {};
             (uR.data||[]).forEach(u=>{ if(u.auth_user_id) authToUid[u.auth_user_id]=u.id; });
             (sR.data||[]).forEach(s=>{ const uid=authToUid[s.user_id]||(usersMap[s.user_id]?s.user_id:null); if(uid) statsMap[uid]=s; });
