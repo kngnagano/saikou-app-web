@@ -10,7 +10,7 @@ const REMINDER_HOUR = 21; // JST 21:00
 
 // ========== Install ==========
 self.addEventListener('install', event => {
-  console.log('[SW v10.5] install');
+  console.log('[SW v10.8] install');
   event.waitUntil(
     // index.html / sw.js はキャッシュしない（常に最新を取得）
     caches.open(CACHE_NAME).then(c =>
@@ -22,7 +22,7 @@ self.addEventListener('install', event => {
 
 // ========== Activate ==========
 self.addEventListener('activate', event => {
-  console.log('[SW v10.5] activate');
+  console.log('[SW v10.8] activate');
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
@@ -80,7 +80,7 @@ self.addEventListener('push', event => {
 // ========== フロントからのメッセージ ==========
 self.addEventListener('message', event => {
   const { type, payload } = event.data || {};
-  console.log('[SW v10.5] message:', type);
+  console.log('[SW v10.8] message:', type);
 
   switch (type) {
     case 'SKIP_WAITING':
