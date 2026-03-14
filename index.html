@@ -3902,10 +3902,9 @@
           await supabase.from('user_stones').upsert({
             user_id: authUid,
             amount: currentStones,
-            extra_task_slots: extraSlots,
             updated_at: new Date().toISOString()
           }, { onConflict: 'user_id' });
-          console.log(`[TaskSlots] Supabase保存: extra_task_slots=${extraSlots}`);
+          console.log(`[TaskSlots] Supabase保存完了`);
         }
       } catch(e) { console.warn('[TaskSlots] Supabase save error:', e); }
       updateStoneUI();
@@ -3964,20 +3963,11 @@
         const authUid = (currentUser && currentUser.authUserId) || null;
         if (!authUid) return currentStones;
         const { data, error } = await supabase
-          .from('user_stones').select('amount, extra_task_slots').eq('user_id', authUid).maybeSingle();
+          .from('user_stones').select('amount').eq('user_id', authUid).maybeSingle();
         if (!error && data) {
           // 常にDBを正とする（デバイス間同期のため）
           currentStones = data.amount || 0;
           saveStonesLocal(userId, currentStones);
-          // extra_task_slots をLocalStorageに同期（DBが上位）
-          if (data.extra_task_slots != null) {
-            const dbSlots = Math.max(0, parseInt(data.extra_task_slots) || 0);
-            const localSlots = parseInt(localStorage.getItem(`saikou_extra_slots_${userId}`) || '0');
-            if (dbSlots > localSlots) {
-              localStorage.setItem(`saikou_extra_slots_${userId}`, String(dbSlots));
-              console.log(`[TaskSlots] DB同期: ${dbSlots}スロット`);
-            }
-          }
         } else if (!error && !data) {
           // 行なし → 初期作成
           if (currentStones > 0) await pushStonesToSupabase(userId, currentStones);
