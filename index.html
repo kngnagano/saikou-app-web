@@ -2526,7 +2526,7 @@
         <p id="insuranceStatus" style="font-size:0.65rem;color:#ff6eb4;margin-top:3px;"></p>
       </div>
       <button onclick="handleBuyInsurance()" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#8b0057,#ff6eb4);color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(255,110,180,0.3);white-space:nowrap;">
-        💎 30
+        💎 50
       </button>
     </div>
 
@@ -4175,7 +4175,7 @@
     }
     async function handleBuyInsurance() {
       if (!currentUser) return;
-      const cost = 30;
+      const cost = 50;
       showItemConfirm('🛡️', '7日ストリーク保険', 'インベントリに追加。使用から7日間、さぼってもストリークが継続します。何枚でもストック可能。', cost, async () => {
         currentStones -= cost;
         saveStonesLocal(currentUser.id, currentStones);
