@@ -1,0 +1,42 @@
+{
+  "name": "Saikou! - 人生をRPGに",
+  "short_name": "Saikou!",
+  "description": "人生をRPGに。毎日のタスクで能力値を上げ、仲間と成長するアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#e8e6e3",
+  "theme_color": "#2c2c2c",
+  "orientation": "portrait",
+  "categories": ["lifestyle", "productivity", "health"],
+  "icons": [
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "lang": "ja",
+  "dir": "ltr"
+}

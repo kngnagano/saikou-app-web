@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saikou! ゲーム設計まとめシート</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070b14; --card: #0f1628; --card2: #111e38;
+    --border: rgba(124,106,255,0.25);
+    --accent: #7c6aff; --accent2: #b39dff;
+    --neon: #00f5ff; --green: #00ff87;
+    --gold: #ffd700; --pink: #ff6eb4; --orange: #ff8c42;
+    --text: #f0f4ff; --text2: #c0d0e8; --text3: #8ba0c0; --text4: #4a5a7a;
+    --pow: #ff6eb4; --kno: #00f5ff; --dis: #ffd700;
+    --vit: #00ff87; --soc: #ff8c42; --cre: #b39dff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    line-height: 1.6;
+  }
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, #0d1628, #1a1040);
+    border-bottom: 2px solid var(--accent);
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(124,106,255,0.15) 0%, transparent 70%);
+  }
+  .header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, #fff 0%, #b39dff 50%, #00f5ff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    position: relative;
+  }
+  .header p { color: var(--text3); font-size: 0.85rem; margin-top: 0.5rem; position: relative; }
+  /* ===== NAV TABS ===== */
+  .tabs {
+    display: flex; gap: 0; flex-wrap: wrap;
+    background: var(--card); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .tab-btn {
+    flex: 1; min-width: 100px;
+    padding: 0.9rem 0.5rem;
+    border: none; background: none; cursor: pointer;
+    color: var(--text3); font-weight: 800; font-size: 0.72rem;
+    letter-spacing: 0.08em; transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+  }
+  .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent); background: rgba(124,106,255,0.08); }
+  .tab-btn:hover { color: var(--text2); background: rgba(255,255,255,0.03); }
+  /* ===== MAIN ===== */
+  .main { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .section { display: none; }
+  .section.active { display: block; }
+  /* ===== SECTION TITLE ===== */
+  .section-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.65rem; font-weight: 900; letter-spacing: 0.25em;
+    color: var(--text3); text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.5rem; padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title span { font-size: 1.2rem; }
+  /* ===== CARD ===== */
+  .card {
+    background: linear-gradient(145deg, var(--card), var(--card2));
+    border-radius: 1.25rem; border: 1px solid var(--border);
+    padding: 1.5rem; margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .card-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.7rem; font-weight: 900; letter-spacing: 0.2em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 1rem;
+  }
+  /* ===== TABLE ===== */
+  .tbl-wrap { overflow-x: auto; border-radius: 0.875rem; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th {
+    background: linear-gradient(135deg, rgba(124,106,255,0.2), rgba(124,106,255,0.1));
+    color: var(--accent2); font-family: 'Poppins', sans-serif;
+    font-size: 0.65rem; font-weight: 900; letter-spacing: 0.15em;
+    padding: 0.75rem 1rem; text-align: center; white-space: nowrap;
+  }
+  th:first-child { text-align: left; }
+  td {
+    padding: 0.6rem 1rem; border-bottom: 1px solid rgba(124,106,255,0.08);
+    color: var(--text2); text-align: center; white-space: nowrap;
+  }
+  td:first-child { text-align: left; font-weight: 700; color: var(--text); }
+  tr:hover td { background: rgba(124,106,255,0.06); }
+  tr:last-child td { border-bottom: none; }
+  .highlight-row td { background: rgba(255,215,0,0.06); }
+  .highlight-row td:first-child { color: var(--gold); }
+  /* ===== BADGES ===== */
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 900; letter-spacing: 0.1em;
+    font-family: 'Poppins', sans-serif;
+  }
+  .badge-pow { background: rgba(255,110,180,0.2); color: var(--pow); border: 1px solid rgba(255,110,180,0.3); }
+  .badge-kno { background: rgba(0,245,255,0.15); color: var(--kno); border: 1px solid rgba(0,245,255,0.25); }
+  .badge-dis { background: rgba(255,215,0,0.15); color: var(--dis); border: 1px solid rgba(255,215,0,0.25); }
+  .badge-vit { background: rgba(0,255,135,0.15); color: var(--vit); border: 1px solid rgba(0,255,135,0.25); }
+  .badge-soc { background: rgba(255,140,66,0.15); color: var(--soc); border: 1px solid rgba(255,140,66,0.25); }
+  .badge-cre { background: rgba(179,157,255,0.2); color: var(--cre); border: 1px solid rgba(179,157,255,0.3); }
+  .badge-xp  { background: rgba(0,245,255,0.12); color: var(--neon); border: 1px solid rgba(0,245,255,0.2); }
+  /* ===== INFO BOX ===== */
+  .info-box {
+    background: rgba(124,106,255,0.08); border: 1px solid rgba(124,106,255,0.2);
+    border-radius: 0.875rem; padding: 1rem 1.25rem; margin-bottom: 1rem;
+    font-size: 0.82rem; color: var(--text2); line-height: 1.8;
+  }
+  .info-box strong { color: var(--accent2); }
+  /* ===== LEVEL GRID ===== */
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+  .level-card {
+    background: linear-gradient(145deg, var(--card), var(--card2));
+    border-radius: 0.875rem; border: 1px solid var(--border);
+    padding: 0.875rem 1rem;
+    transition: transform 0.15s;
+  }
+  .level-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .level-card .lv-num {
+    font-family: 'Poppins', sans-serif; font-size: 1.4rem; font-weight: 900;
+    color: var(--accent2); line-height: 1;
+  }
+  .level-card .lv-title { font-size: 0.8rem; font-weight: 700; color: var(--text); margin: 4px 0 2px; }
+  .level-card .lv-xp { font-size: 0.68rem; color: var(--text3); }
+  /* ===== STAT ROW ===== */
+  .stat-section { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+  .stat-card {
+    background: linear-gradient(145deg, var(--card), var(--card2));
+    border-radius: 1rem; padding: 1.25rem;
+    border: 1px solid var(--border);
+  }
+  .stat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  .stat-emoji { font-size: 1.6rem; }
+  .stat-name { font-family: 'Poppins', sans-serif; font-weight: 900; letter-spacing: 0.15em; }
+  .stat-desc { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+  .title-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .title-threshold { font-family: 'Poppins', sans-serif; font-size: 0.68rem; font-weight: 900; }
+  .title-name { font-size: 0.78rem; font-weight: 700; }
+  /* ===== SCENARIO BOX ===== */
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+  .scenario-card {
+    background: linear-gradient(145deg, var(--card), var(--card2));
+    border-radius: 1rem; padding: 1.25rem; border: 1px solid var(--border);
+    text-align: center;
+  }
+  .scenario-card .s-emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+  .scenario-card .s-label { font-size: 0.72rem; color: var(--text3); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 0.25rem; }
+  .scenario-card .s-value { font-family: 'Poppins', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--accent2); }
+  .scenario-card .s-detail { font-size: 0.7rem; color: var(--text3); margin-top: 4px; }
+  /* ===== PRINT ===== */
+  .print-btn {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; border: none; border-radius: 50px;
+    padding: 0.75rem 1.5rem; font-weight: 900; font-size: 0.85rem;
+    cursor: pointer; box-shadow: 0 8px 24px rgba(124,106,255,0.4);
+    z-index: 200; letter-spacing: 0.06em;
+    transition: transform 0.15s;
+  }
+  .print-btn:hover { transform: scale(1.05); }
+  @media print {
+    .tabs, .print-btn { display: none; }
+    .section { display: block !important; }
+    body { background: white; color: black; }
+    .card, .level-card, .stat-card, .scenario-card { border: 1px solid #ccc; background: #fafafa; }
+    th { background: #eee !important; color: #333 !important; }
+    td { color: #333; }
+  }
+  @media (max-width: 600px) {
+    .tab-btn { font-size: 0.62rem; padding: 0.7rem 0.3rem; }
+    .main { padding: 1rem 0.75rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <h1>⚔️ Saikou! ゲーム設計まとめシート</h1>
+  <p>称号 / 能力値 / XP / レベルテーブル — v11.3.0 完全版</p>
+</div>
+
+<!-- ===== TABS ===== -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('overview')">📊 概要</button>
+  <button class="tab-btn" onclick="switchTab('levelxp')">⭐ レベル&XP</button>
+  <button class="tab-btn" onclick="switchTab('titles')">🏆 称号一覧</button>
+  <button class="tab-btn" onclick="switchTab('stats')">⚔️ 能力値</button>
+  <button class="tab-btn" onclick="switchTab('genres')">📋 ジャンル</button>
+  <button class="tab-btn" onclick="switchTab('bonus')">🎁 ボーナス</button>
+  <button class="tab-btn" onclick="switchTab('stones')">💎 ストーン</button>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- ========== 概要 ========== -->
+  <div class="section active" id="sec-overview">
+    <div class="section-title"><span>📊</span> ゲーム概要 — 基本設計</div>
+
+    <div class="info-box">
+      <strong>基本コンセプト：</strong>毎日タスクを達成するごとに能力値が上がり、能力値の合計がそのままXPになる。XPが溜まるとレベルアップ。<br>
+      <strong>設計目標：</strong>毎日3タスク × 365日 ≒ Lv.100 到達。1日1タスク × 365日 ≒ Lv.60 相当。
+    </div>
+
+    <div class="scenario-grid">
+      <div class="scenario-card">
+        <div class="s-emoji">🔥</div>
+        <div class="s-label">1タスク完了の報酬</div>
+        <div class="s-value">主+5 / 副+2 XP</div>
+        <div class="s-detail">選んだジャンルの主能力+5、副能力+2</div>
+      </div>
+      <div class="scenario-card">
+        <div class="s-emoji">⚡</div>
+        <div class="s-label">3タスク全完了ボーナス</div>
+        <div class="s-value">DIS +3 XP</div>
+        <div class="s-detail">継続力(DIS)を毎日3つ達成した人に上乗せ</div>
+      </div>
+      <div class="scenario-card">
+        <div class="s-emoji">📅</div>
+        <div class="s-label">1日最大XP（全完了）</div>
+        <div class="s-value">最大 +24 XP</div>
+        <div class="s-detail">主5×3=15 + 副2×3=6 + DIS3 = 24</div>
+      </div>
+      <div class="scenario-card">
+        <div class="s-emoji">🏆</div>
+        <div class="s-label">Lv.100 到達目安</div>
+        <div class="s-value">≒ 9,490 XP</div>
+        <div class="s-detail">毎日3タスク × 365日 = 約1年でLv.100</div>
+      </div>
+      <div class="scenario-card">
+        <div class="s-emoji">📈</div>
+        <div class="s-label">週5 × 3タスク（1年）</div>
+        <div class="s-value">約 Lv.80</div>
+        <div class="s-detail">24XP × 5日 × 52週 ≒ 6,240 XP</div>
+      </div>
+      <div class="scenario-card">
+        <div class="s-emoji">🌱</div>
+        <div class="s-label">週3 × 1タスク（1年）</div>
+        <div class="s-value">約 Lv.35</div>
+        <div class="s-detail">7XP × 3日 × 52週 ≒ 1,092 XP</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-title">🔑 XP ≡ 能力値合計</div>
+      <div class="info-box" style="margin-bottom:0;">
+        <strong>total_xp = pow + kno + dis + vit + soc + cre の合計値</strong><br>
+        タスクを完了するごとに能力値が直接増加し、その合計が XP になる。<br>
+        XP を別途管理するのではなく、<strong>能力値の総和がそのまま XP</strong>。<br>
+        フレンドとのXP比較も同じ計算式で統一されている。
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== レベル & XP ========== -->
+  <div class="section" id="sec-levelxp">
+    <div class="section-title"><span>⭐</span> レベル &amp; XP テーブル</div>
+
+    <div class="info-box">
+      <strong>XPテーブル設計：</strong>Lv1→2 は <strong>20 XP</strong>、以降 <strong>1.075倍</strong>ずつ増加（なだらか曲線）<br>
+      <strong>Lv100以降：</strong>1000 XP ごとに +1 レベル（上限なし）
+    </div>
+
+    <div class="card">
+      <div class="card-title">主要レベルの累計XP要件と称号</div>
+      <div class="tbl-wrap">
+        <table id="levelTable">
+          <thead>
+            <tr>
+              <th>Lv</th>
+              <th>称号（XP_LEVEL_TITLES）</th>
+              <th>累計XP（到達時）</th>
+              <th>そのLvで必要なXP</th>
+              <th>目安プレイ日数（3タスク/日）</th>
+            </tr>
+          </thead>
+          <tbody id="levelTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 称号一覧 ========== -->
+  <div class="section" id="sec-titles">
+    <div class="section-title"><span>🏆</span> 称号一覧</div>
+
+    <div class="card">
+      <div class="card-title">① レベル称号（XP_LEVEL_TITLES） — Lv.1〜100 全100種</div>
+      <div class="info-box">レベルアップするたびに自動で変わる称号。ホーム画面の XP バーに表示されます。</div>
+      <div class="level-grid" id="titlesGrid"></div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-title">② 節目称号（LEVEL_TITLES_MAP） — 総合レベルの大きな節目</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>到達Lv</th><th>節目称号</th><th>目安XP</th><th>備考</th></tr></thead>
+          <tbody>
+            <tr><td>Lv.1</td><td>旅立ちの者</td><td>0 XP〜</td><td>初期状態</td></tr>
+            <tr><td>Lv.5</td><td>見習い冒険者</td><td>〜90 XP</td><td>1週間毎日頑張ると到達</td></tr>
+            <tr><td>Lv.10</td><td>駆け出し勇者</td><td>〜210 XP</td><td></td></tr>
+            <tr class="highlight-row"><td>Lv.20</td><td>努力の戦士</td><td>〜550 XP</td><td>約1ヶ月全力</td></tr>
+            <tr><td>Lv.30</td><td>熟練の挑戦者</td><td>〜1,060 XP</td><td></td></tr>
+            <tr class="highlight-row"><td>Lv.50</td><td>継続の達人</td><td>〜2,850 XP</td><td>約4ヶ月全力</td></tr>
+            <tr><td>Lv.80</td><td>英雄級</td><td>〜6,520 XP</td><td>約8ヶ月全力</td></tr>
+            <tr class="highlight-row"><td>Lv.100</td><td>伝説級</td><td>〜9,490 XP</td><td>約1年全力</td></tr>
+            <tr><td>Lv.150</td><td>神話級</td><td>Lv100超: +50,000 XP</td><td>伝説の域</td></tr>
+            <tr><td>Lv.200</td><td>王者</td><td>—</td><td></td></tr>
+            <tr><td>Lv.300</td><td>覇者</td><td>—</td><td></td></tr>
+            <tr><td>Lv.500</td><td>不滅</td><td>—</td><td></td></tr>
+            <tr class="highlight-row"><td>Lv.1000</td><td>Saikou</td><td>—</td><td>最高称号</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 能力値 ========== -->
+  <div class="section" id="sec-stats">
+    <div class="section-title"><span>⚔️</span> 6能力値 — 定義と特化称号</div>
+
+    <div class="stat-section" id="statSection"></div>
+  </div>
+
+  <!-- ========== ジャンル ========== -->
+  <div class="section" id="sec-genres">
+    <div class="section-title"><span>📋</span> 40ジャンル — タスク能力値付与一覧</div>
+
+    <div class="info-box">
+      <strong>タスク1件完了 = 主能力 +5、副能力 +2</strong><br>
+      ジャンルを選ぶと、どの能力が伸びるかが決まります。
+    </div>
+
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>タスク名</th>
+              <th>カテゴリ</th>
+              <th>主能力（+5）</th>
+              <th>副能力（+2）</th>
+              <th>1タスクXP</th>
+            </tr>
+          </thead>
+          <tbody id="genresTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ボーナス ========== -->
+  <div class="section" id="sec-bonus">
+    <div class="section-title"><span>🎁</span> ボーナス一覧</div>
+
+    <div class="card">
+      <div class="card-title">毎日のボーナス</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>条件</th><th>付与内容</th><th>XP換算</th><th>備考</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>1タスク完了</td>
+              <td>主能力 +5、副能力 +2</td>
+              <td>+7 XP</td>
+              <td>ジャンルに応じた能力が上昇</td>
+            </tr>
+            <tr class="highlight-row">
+              <td>3タスク全完了（コミット）</td>
+              <td>DIS（継続力） +3</td>
+              <td>+3 XP</td>
+              <td>毎日3つ達成し続ける人への特典</td>
+            </tr>
+            <tr>
+              <td>3タスク全完了（1日最大）</td>
+              <td>合計 +24 XP（能力値として蓄積）</td>
+              <td>+24 XP</td>
+              <td>主5×3 + 副2×3 + DIS3</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-title">ストリークボーナス — DIS（継続力）への特別加算</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>ストリーク日数</th><th>ボーナス内容</th><th>XP換算</th><th>種別</th></tr></thead>
+          <tbody>
+            <tr><td>7日倍数すべて（7,21,28,35...）</td><td>DIS +1</td><td>+1 XP</td><td>7日ごとボーナス</td></tr>
+            <tr class="highlight-row"><td>7日</td><td>DIS +2（節目ボーナス）</td><td>+2 XP</td><td>節目ボーナス（優先）</td></tr>
+            <tr class="highlight-row"><td>14日</td><td>DIS +2</td><td>+2 XP</td><td>節目ボーナス</td></tr>
+            <tr class="highlight-row"><td>30日</td><td>DIS +2</td><td>+2 XP</td><td>節目ボーナス（1ヶ月！）</td></tr>
+            <tr class="highlight-row"><td>60日</td><td>DIS +2</td><td>+2 XP</td><td>節目ボーナス（2ヶ月！）</td></tr>
+            <tr class="highlight-row"><td>100日</td><td>DIS +2</td><td>+2 XP</td><td>節目ボーナス（100日！）</td></tr>
+            <tr class="highlight-row"><td>150日</td><td>DIS +2</td><td>+2 XP</td><td>節目ボーナス</td></tr>
+            <tr class="highlight-row"><td>200日</td><td>DIS +2</td><td>+2 XP</td><td>節目ボーナス</td></tr>
+            <tr class="highlight-row"><td>365日</td><td>DIS +2</td><td>+2 XP</td><td>節目ボーナス（1年！！）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-box" style="margin-top:1rem;margin-bottom:0;">
+        <strong>判定ルール：</strong>節目（7,14,30,60,100,150,200,365日）は +2 優先。節目でない7の倍数は +1。
+        ストリークは「今日コミットした後の連続日数」で判定。
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-title">📊 年間プレイシミュレーション</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>プレイスタイル</th>
+              <th>1日XP</th>
+              <th>週XP</th>
+              <th>年間XP</th>
+              <th>到達レベル目安</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>毎日3タスク全完了（最大）</td><td>+24</td><td>+168</td><td>≒8,760</td><td>Lv.95〜100</td></tr>
+            <tr><td>毎日3タスク（ボーナスあり）</td><td>+24〜26</td><td>+170〜182</td><td>≒9,490</td><td>Lv.100</td></tr>
+            <tr class="highlight-row"><td>週5日 × 3タスク</td><td>—</td><td>+120</td><td>≒6,240</td><td>Lv.80〜85</td></tr>
+            <tr><td>毎日2タスク</td><td>+14〜17</td><td>+98〜119</td><td>≒5,600</td><td>Lv.75〜80</td></tr>
+            <tr><td>毎日1タスク</td><td>+7</td><td>+49</td><td>≒2,555</td><td>Lv.55〜60</td></tr>
+            <tr><td>週3日 × 1タスク</td><td>—</td><td>+21</td><td>≒1,092</td><td>Lv.30〜35</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /sec-bonus -->
+
+  <!-- ========== 💎 アルタストーン ========== -->
+  <div class="section" id="sec-stones">
+    <div class="section-title"><span>💎</span> アルタストーン — 経済設計マトリックス</div>
+
+    <div class="info-box" style="border-color:rgba(0,245,255,0.3);background:rgba(0,245,255,0.04);">
+      <strong style="color:#00f5ff;">コンセプト：</strong>アルタストーン（💎）は<strong>希少な魂の欠片</strong>。無課金でも毎日コツコツ集められるが、
+      課金すれば大量入手できる。ストリーク回復などの「続ける力」に直結する消費アイテムとして、
+      継続モチベーションを下支えする。<br>
+      <em>「もったいない」感覚がリテンションを生む設計</em>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💎 ストーン獲得マトリックス（無課金）</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>獲得方法</th><th>獲得量</th><th>頻度</th><th>月間最大</th><th>備考</th></tr></thead>
+          <tbody>
+            <tr class="highlight-row">
+              <td>🌅 ログインボーナス</td>
+              <td><strong>+1💎</strong></td>
+              <td>1日1回</td>
+              <td>≒30💎</td>
+              <td>毎日ログインするだけで獲得。連続ログインを促す</td>
+            </tr>
+            <tr>
+              <td>🤝 フレンド30分以内同時達成</td>
+              <td><strong>+1💎</strong></td>
+              <td>コミット時</td>
+              <td>フレンド数×日数</td>
+              <td>フレンドが達成して30分以内に自分も達成。社会的動機付け</td>
+            </tr>
+            <tr>
+              <td>🏆 ストリーク節目（将来実装）</td>
+              <td><strong>+3〜10💎</strong></td>
+              <td>節目のみ</td>
+              <td>節目依存</td>
+              <td>7日/30日/100日/365日節目に特別ボーナス</td>
+            </tr>
+            <tr>
+              <td>🎯 チャレンジクリア（将来実装）</td>
+              <td><strong>+2〜5💎</strong></td>
+              <td>週1回程度</td>
+              <td>≒12💎</td>
+              <td>週間・月間チャレンジをクリアで獲得</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-box" style="margin-top:1rem;margin-bottom:0;">
+        <strong>月間無課金獲得量目安：</strong>ログインボーナスのみで約30💎。フレンド多数なら最大50〜70💎/月。
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-title">🔥 ストーン消費マトリックス</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>使い道</th><th>消費量</th><th>効果</th><th>価値評価</th><th>備考</th></tr></thead>
+          <tbody>
+            <tr class="highlight-row">
+              <td>🔥 ストリーク回復（1日分）</td>
+              <td><strong>3💎</strong></td>
+              <td>途切れた連続記録を1日補填</td>
+              <td>⭐⭐⭐⭐⭐</td>
+              <td>最重要機能。100日連続ユーザーには手放せない</td>
+            </tr>
+            <tr>
+              <td>⚡ XPブースト×2（将来実装）</td>
+              <td><strong>5💎</strong></td>
+              <td>当日のXP獲得量2倍</td>
+              <td>⭐⭐⭐</td>
+              <td>重要イベント日などに使用</td>
+            </tr>
+            <tr>
+              <td>🎨 特別アバターフレーム（将来実装）</td>
+              <td><strong>20💎</strong></td>
+              <td>限定デザインフレーム解除</td>
+              <td>⭐⭐⭐</td>
+              <td>コレクション要素。見せびらかし文化</td>
+            </tr>
+            <tr>
+              <td>🏅 特別称号（将来実装）</td>
+              <td><strong>30💎</strong></td>
+              <td>限定称号を永久解除</td>
+              <td>⭐⭐⭐⭐</td>
+              <td>ステータスシンボル。強い動機付け</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-title">💳 課金マトリックス（参考価格）</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>パック名</th><th>石数</th><th>価格（円）</th><th>単価</th><th>ストリーク回復換算</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>🌟 スターターパック</td>
+              <td><strong>5💎</strong></td>
+              <td>¥120</td>
+              <td>¥24/石</td>
+              <td>1回分回復 + 余り2石</td>
+            </tr>
+            <tr class="highlight-row">
+              <td>💎 スタンダードパック</td>
+              <td><strong>30💎</strong></td>
+              <td>¥480</td>
+              <td>¥16/石</td>
+              <td>10回分回復（最人気）</td>
+            </tr>
+            <tr>
+              <td>🔥 プレミアムパック</td>
+              <td><strong>80💎</strong></td>
+              <td>¥980</td>
+              <td>¥12.25/石</td>
+              <td>26回分回復（超お得）</td>
+            </tr>
+            <tr>
+              <td>👑 レジェンドパック</td>
+              <td><strong>200💎</strong></td>
+              <td>¥1,980</td>
+              <td>¥9.9/石</td>
+              <td>66回分回復（最高コスパ）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-box" style="margin-top:1rem;margin-bottom:0;">
+        <strong>💡 設計ポイント：</strong>最小課金¥120からスタート。心理的ハードルを下げて最初の課金を促す。
+        スタンダード(¥480)が「お得感と手頃さ」で最も売れる価格帯。年間課金額目安：月1回課金×¥480×12＝¥5,760/年。
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-title">📊 ストーン経済バランスシミュレーション</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>ユーザータイプ</th><th>月間獲得</th><th>月間消費目安</th><th>残高推移</th><th>課金圧力</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>🔰 カジュアル（週3日コミット）</td>
+              <td>≒20💎</td>
+              <td>0〜3💎</td>
+              <td>増加傾向</td>
+              <td>低い（ほぼ不要）</td>
+            </tr>
+            <tr class="highlight-row">
+              <td>🔥 コア（毎日コミット）</td>
+              <td>≒35💎</td>
+              <td>3〜9💎</td>
+              <td>安定〜増加</td>
+              <td>低〜中（たまに使う）</td>
+            </tr>
+            <tr>
+              <td>💎 ハードコア（連続100日+）</td>
+              <td>≒50💎</td>
+              <td>9〜21💎</td>
+              <td>均衡</td>
+              <td>中（時々課金したい）</td>
+            </tr>
+            <tr>
+              <td>👑 コレクター（全機能活用）</td>
+              <td>≒50💎</td>
+              <td>30〜50💎</td>
+              <td>不足気味</td>
+              <td>高い（積極課金）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-title">🎮 ゲーム設計としての「ストーン」の役割</div>
+      <div class="stat-section">
+        <div style="background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.2);border-radius:1rem;padding:1.25rem;">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem;">🔒</div>
+          <div style="font-weight:700;color:#00f5ff;margin-bottom:0.5rem;">損失回避（ロスアバーション）</div>
+          <div style="font-size:0.85rem;color:#8ba0c0;line-height:1.7;">
+            「100日連続が3日でリセットされる」という恐怖が、ストーンへの需要を生む。
+            人間は「得る喜び」よりも「失う痛み」を2倍強く感じる（カーネマン理論）。
+          </div>
+        </div>
+        <div style="background:rgba(255,140,66,0.05);border:1px solid rgba(255,140,66,0.2);border-radius:1rem;padding:1.25rem;">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem;">🤝</div>
+          <div style="font-weight:700;color:#ff8c42;margin-bottom:0.5rem;">ソーシャルプレッシャー</div>
+          <div style="font-size:0.85rem;color:#8ba0c0;line-height:1.7;">
+            フレンド同時達成ボーナスにより、「フレンドが達成した＝自分も達成すれば石が貰える」
+            という自発的な動機付けが生まれる。Duolingoの「友達に通知」と同様の効果。
+          </div>
+        </div>
+        <div style="background:rgba(179,157,255,0.05);border:1px solid rgba(179,157,255,0.2);border-radius:1rem;padding:1.25rem;">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem;">💰</div>
+          <div style="font-weight:700;color:#b39dff;margin-bottom:0.5rem;">希少性の設計</div>
+          <div style="font-size:0.85rem;color:#8ba0c0;line-height:1.7;">
+            無課金でも獲得できるが「常に余るほど多くない」絶妙な量に設定。
+            「もったいなくて使えない」→「課金して安心したい」という心理を誘導。
+          </div>
+        </div>
+        <div style="background:rgba(0,255,135,0.05);border:1px solid rgba(0,255,135,0.2);border-radius:1rem;padding:1.25rem;">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem;">🎯</div>
+          <div style="font-weight:700;color:#00ff87;margin-bottom:0.5rem;">毎日ログイン動機</div>
+          <div style="font-size:0.85rem;color:#8ba0c0;line-height:1.7;">
+            「ログインするだけで1石」はシンプルながら強力な日次リテンション施策。
+            Duolingo・ポケモンGOが証明した「デイリーボーナス」の効果を踏襲。
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sec-stones -->
+
+</div><!-- /main -->
+
+<button class="print-btn" onclick="window.print()">🖨️ 印刷・PDF保存</button>
+
+<script>
+// ===== データ定義（index.html のコードと完全一致） =====
+
+const XP_LEVEL_TITLES = [
+  '', // index 0 unused
+  'はじめの一歩','継続の芽','小さな習慣','積み重ねる人','毎日の戦士',
+  '習慣の守護者','揺るぎない意志','確かな歩み','見えてきた景色','二桁の覚悟',
+  '折れない心','リズムの申し子','習慣の鎧','静かな炎','磨かれる刃',
+  '焦らぬ強さ','一日一善','積み上げ人','己を知る者','二十の誇り',
+  '習慣の騎士','揺るがぬ基盤','確かな軌跡','光る可能性','挑む者',
+  '鍛錬の日々','見えぬ限界','続ける理由','静かな革命','三十の境地',
+  '不動の習慣','意志の彫刻家','毎朝の誓い','鉄の意志','磨き続ける者',
+  '自己超越','刻まれた歩み','目覚めの聖者','揺るがぬ光','四十の覚醒',
+  '習慣の賢者','意志の建築家','継続の猛者','折れたことなき魂','己の主',
+  '限界を超えし者','炎の継続者','鋼の日課','孤高の求道者','五十の超越',
+  '伝説の始まり','不屈の闘志','揺るぎなき哲学','常勝の習慣家','継続の達人',
+  '時を刻む者','光芒の探求者','己を磨く剣士','魂の継続者','六十の覚悟',
+  '習慣の神話','伝説の求道者','鉄壁の継続','見えない力を積む者','己の哲学者',
+  '揺るぎなき灯火','刀のような意志','不滅の習慣家','光の記録者','七十の境地',
+  '習慣の巨人','伝説の繰り返し','魂の鍛冶師','継続の王','打ち勝つ精神',
+  '不動明王','習慣の伝道師','己に勝った者','夜明けを呼ぶ人','八十の聖域',
+  '継続の伝説','揺るぎなき哲人','無限の鍛錬','己を超えし求道者','習慣の聖人',
+  '時代を超える者','鋼の精神','不滅の継続者','孤高の哲学者','九十の神話',
+  '継続の神','意志の具現者','魂の完成形','習慣の頂','地平を超えた者',
+  '己の主人公','時間を征した者','揺るぎなき覚悟','伝説の継続者','LEGEND'
+];
+
+function buildXpTable() {
+  const table = [0, 0];
+  for (let lv = 2; lv <= 101; lv++) {
+    const needed = Math.round(20 * Math.pow(1.075, lv - 2));
+    table.push(table[lv - 1] + needed);
+  }
+  return table;
+}
+const XP_TABLE = buildXpTable();
+
+function calcLevel(totalXp) {
+  const xp = Math.max(0, totalXp);
+  const cap = XP_TABLE[101] || 9999;
+  if (xp >= cap) return 100 + Math.floor((xp - cap) / 1000);
+  let lv = 1;
+  for (let i = 1; i <= 100; i++) {
+    if (XP_TABLE[i + 1] !== undefined && xp >= XP_TABLE[i + 1]) lv = i + 1;
+    else break;
+  }
+  return lv;
+}
+
+const STAT_INFO = {
+  POW: { name:'Power（行動力）', emoji:'⚡', color:'#ff6eb4', cls:'pow' },
+  KNO: { name:'Knowledge（知力）', emoji:'📖', color:'#00f5ff', cls:'kno' },
+  DIS: { name:'Discipline（継続力）', emoji:'🔥', color:'#ffd700', cls:'dis' },
+  VIT: { name:'Vitality（体力）', emoji:'💪', color:'#00ff87', cls:'vit' },
+  SOC: { name:'Social（人間力）', emoji:'🤝', color:'#ff8c42', cls:'soc' },
+  CRE: { name:'Creativity（創造力）', emoji:'🎨', color:'#b39dff', cls:'cre' },
+};
+
+const STAT_DESCS = {
+  POW: '自ら行動を起こす力。仕事・挑戦・営業など、攻めのタスクをこなすほど伸びる。',
+  KNO: '知識と思考の力。学習・勉強・プログラミングなど、インプット系で成長する。',
+  DIS: 'ルーティンを続ける力。すべてのタスクを毎日継続することで積み重なる。ストリークボーナスも加算される。',
+  VIT: '心身のエネルギー。運動・健康管理・睡眠改善などフィジカル系タスクで向上する。',
+  SOC: '人との繋がりの力。コミュニケーション・感謝・交流系タスクで磨かれる。',
+  CRE: '創造と表現の力。アイデア・創作・SNS発信など自分を表現するタスクで伸びる。',
+};
+
+const STAT_TITLES = {
+  POW: { 50:'行動者', 100:'突破者', 200:'開拓者', 500:'世界を動かす者' },
+  KNO: { 50:'学徒', 100:'賢者', 200:'大賢者', 500:'叡智そのもの' },
+  DIS: { 50:'習慣職人', 100:'鉄の意志', 200:'不屈', 500:'戒律の化身' },
+  VIT: { 50:'健脚', 100:'鉄人', 200:'超回復', 500:'生命の巨人' },
+  SOC: { 50:'協力者', 100:'導く者', 200:'盟主', 500:'人を照らす者' },
+  CRE: { 50:'創り手', 100:'表現者', 200:'革新者', 500:'創造神' },
+};
+
+const GENRES = [
+  { id:1,  name:'英語',            cat:'📚 学習',       pri:'KNO', sec:'DIS' },
+  { id:2,  name:'読書',            cat:'📚 学習',       pri:'KNO', sec:'CRE' },
+  { id:3,  name:'資格勉強',        cat:'📚 学習',       pri:'KNO', sec:'DIS' },
+  { id:4,  name:'プログラミング',  cat:'📚 学習',       pri:'KNO', sec:'CRE' },
+  { id:5,  name:'IT学習',          cat:'📚 学習',       pri:'KNO', sec:'DIS' },
+  { id:6,  name:'金融・投資学習',  cat:'📚 学習',       pri:'KNO', sec:'DIS' },
+  { id:7,  name:'語学（英語以外）',cat:'📚 学習',       pri:'KNO', sec:'DIS' },
+  { id:8,  name:'ライティング',    cat:'📚 学習',       pri:'KNO', sec:'CRE' },
+  { id:9,  name:'思考整理',        cat:'📚 学習',       pri:'KNO', sec:'DIS' },
+  { id:10, name:'研究・調査',      cat:'📚 学習',       pri:'KNO', sec:'CRE' },
+  { id:11, name:'営業',            cat:'💼 仕事・挑戦', pri:'POW', sec:'SOC' },
+  { id:12, name:'起業準備',        cat:'💼 仕事・挑戦', pri:'POW', sec:'CRE' },
+  { id:13, name:'副業作業',        cat:'💼 仕事・挑戦', pri:'POW', sec:'DIS' },
+  { id:14, name:'企画',            cat:'💼 仕事・挑戦', pri:'CRE', sec:'KNO' },
+  { id:15, name:'プレゼン準備',    cat:'💼 仕事・挑戦', pri:'KNO', sec:'SOC' },
+  { id:16, name:'交渉・折衝',      cat:'💼 仕事・挑戦', pri:'SOC', sec:'POW' },
+  { id:17, name:'業務改善',        cat:'💼 仕事・挑戦', pri:'KNO', sec:'POW' },
+  { id:18, name:'目標設計',        cat:'💼 仕事・挑戦', pri:'DIS', sec:'KNO' },
+  { id:19, name:'お金管理',        cat:'💼 仕事・挑戦', pri:'DIS', sec:'KNO' },
+  { id:20, name:'片付け・整理',    cat:'💼 仕事・挑戦', pri:'DIS', sec:'POW' },
+  { id:21, name:'ランニング',      cat:'💪 健康・身体', pri:'VIT', sec:'POW' },
+  { id:22, name:'筋トレ',          cat:'💪 健康・身体', pri:'VIT', sec:'POW' },
+  { id:23, name:'ストレッチ',      cat:'💪 健康・身体', pri:'VIT', sec:'DIS' },
+  { id:24, name:'ウォーキング',    cat:'💪 健康・身体', pri:'VIT', sec:'DIS' },
+  { id:25, name:'スポーツ',        cat:'💪 健康・身体', pri:'VIT', sec:'SOC' },
+  { id:26, name:'ヨガ/ピラティス', cat:'💪 健康・身体', pri:'VIT', sec:'DIS' },
+  { id:27, name:'食事管理',        cat:'💪 健康・身体', pri:'DIS', sec:'VIT' },
+  { id:28, name:'睡眠改善',        cat:'💪 健康・身体', pri:'VIT', sec:'DIS' },
+  { id:29, name:'姿勢改善',        cat:'💪 健康・身体', pri:'VIT', sec:'DIS' },
+  { id:30, name:'休養/リカバリー', cat:'💪 健康・身体', pri:'VIT', sec:'DIS' },
+  { id:31, name:'早起き',          cat:'🧘 継続・自己管理', pri:'DIS', sec:'VIT' },
+  { id:32, name:'日記',            cat:'🧘 継続・自己管理', pri:'DIS', sec:'CRE' },
+  { id:33, name:'瞑想/マインドフル',cat:'🧘 継続・自己管理',pri:'DIS', sec:'SOC' },
+  { id:34, name:'時間管理',        cat:'🧘 継続・自己管理', pri:'DIS', sec:'KNO' },
+  { id:35, name:'デジタルデトックス',cat:'🧘 継続・自己管理',pri:'DIS', sec:'VIT' },
+  { id:36, name:'家族時間',        cat:'🤝 人間関係',   pri:'SOC', sec:'DIS' },
+  { id:37, name:'友人交流',        cat:'🤝 人間関係',   pri:'SOC', sec:'POW' },
+  { id:38, name:'感謝・貢献',      cat:'🤝 人間関係',   pri:'SOC', sec:'CRE' },
+  { id:39, name:'クリエイティブ制作',cat:'🎨 創造',     pri:'CRE', sec:'DIS' },
+  { id:40, name:'SNS発信',         cat:'🎨 創造',       pri:'CRE', sec:'SOC' },
+];
+
+// ===== テーブル生成 =====
+
+// レベルXPテーブル（主要レベルのみ）
+(function buildLevelTable() {
+  const keyLevels = [1,2,3,5,7,10,15,20,25,30,40,50,60,70,80,90,100];
+  const tbody = document.getElementById('levelTbody');
+  keyLevels.forEach(lv => {
+    const xpReach   = XP_TABLE[lv] || 0;
+    const xpNeeded  = lv < 100 ? (XP_TABLE[lv+1] - XP_TABLE[lv]) : 1000;
+    const days      = Math.ceil(xpReach / 24); // 1日24XP想定
+    const title     = XP_LEVEL_TITLES[lv] || '—';
+    const isMajor   = [10,20,30,50,80,100].includes(lv);
+    const tr        = document.createElement('tr');
+    if (isMajor) tr.classList.add('highlight-row');
+    tr.innerHTML = `
+      <td><span style="font-family:'Poppins',sans-serif;font-weight:900;font-size:1rem;color:#b39dff;">Lv.${lv}</span></td>
+      <td style="text-align:left;font-weight:700;color:#f0f4ff;">${title}</td>
+      <td><strong>${xpReach.toLocaleString()}</strong> XP</td>
+      <td>+${xpNeeded.toLocaleString()} XP</td>
+      <td>${lv === 1 ? '初日' : '約' + days + '日'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+})();
+
+// 称号グリッド（全100レベル）
+(function buildTitlesGrid() {
+  const grid = document.getElementById('titlesGrid');
+  for (let lv = 1; lv <= 100; lv++) {
+    const title   = XP_LEVEL_TITLES[lv] || '—';
+    const xp      = XP_TABLE[lv] || 0;
+    const isMajor = [10,20,30,50,80,100].includes(lv);
+    const div = document.createElement('div');
+    div.className = 'level-card';
+    if (isMajor) div.style.borderColor = 'rgba(255,215,0,0.4)';
+    div.innerHTML = `
+      <div class="lv-num" style="${isMajor ? 'color:#ffd700;' : ''}">Lv.${lv}</div>
+      <div class="lv-title">${title}</div>
+      <div class="lv-xp">到達 ${xp.toLocaleString()} XP</div>
+    `;
+    grid.appendChild(div);
+  }
+})();
+
+// 能力値セクション
+(function buildStatSection() {
+  const section = document.getElementById('statSection');
+  ['POW','KNO','DIS','VIT','SOC','CRE'].forEach(key => {
+    const info   = STAT_INFO[key];
+    const titles = STAT_TITLES[key];
+    const desc   = STAT_DESCS[key];
+    const titleRows = Object.entries(titles).map(([pts, name]) => `
+      <div class="title-row">
+        <div class="title-threshold">
+          <span class="badge badge-${info.cls}">${key}</span>
+          <span style="color:${info.color};font-family:'Poppins',sans-serif;font-weight:900;margin-left:6px;">${pts}pts</span>
+        </div>
+        <div class="title-name" style="color:${info.color};">${name}</div>
+      </div>
+    `).join('');
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.style.borderColor = info.color + '44';
+    card.innerHTML = `
+      <div class="stat-header">
+        <div class="stat-emoji">${info.emoji}</div>
+        <div>
+          <div class="stat-name" style="color:${info.color};">${key}</div>
+          <div class="stat-desc">${info.name}</div>
+        </div>
+      </div>
+      <p style="font-size:0.78rem;color:#a0b4cc;line-height:1.7;margin-bottom:1rem;">${desc}</p>
+      <div style="font-size:0.62rem;font-weight:900;letter-spacing:0.15em;color:${info.color}88;margin-bottom:8px;text-transform:uppercase;">特化称号</div>
+      ${titleRows}
+    `;
+    section.appendChild(card);
+  });
+})();
+
+// ジャンルテーブル
+(function buildGenresTable() {
+  const tbody = document.getElementById('genresTbody');
+  GENRES.forEach(g => {
+    const priInfo = STAT_INFO[g.pri];
+    const secInfo = STAT_INFO[g.sec];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#4a5a7a;font-size:0.72rem;">${g.id}</td>
+      <td style="text-align:left;font-weight:700;color:#f0f4ff;">${g.name}</td>
+      <td style="text-align:left;font-size:0.78rem;color:#8ba0c0;">${g.cat}</td>
+      <td><span class="badge badge-${g.pri.toLowerCase()}">${priInfo.emoji} ${g.pri}</span> <span style="font-size:0.7rem;color:#8ba0c0;">+5</span></td>
+      <td><span class="badge badge-${g.sec.toLowerCase()}">${secInfo.emoji} ${g.sec}</span> <span style="font-size:0.7rem;color:#8ba0c0;">+2</span></td>
+      <td><span class="badge badge-xp">+7 XP</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+})();
+
+// ===== タブ切り替え =====
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

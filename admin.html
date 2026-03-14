@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saikou! 管理者パネル</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; }
+    a { color: inherit; }
+
+    /* ─── レイアウト ─── */
+    .header { background: #16162a; border-bottom: 1px solid #2a2a4a; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 1rem; font-weight: 700; color: #fff; }
+    .header .sub { font-size: 0.72rem; color: #888; margin-top: 2px; }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* ─── カード ─── */
+    .card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+    .card h2 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* ─── ステータスバー ─── */
+    .status-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat { background: #111128; border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px; text-align: center; }
+    .stat .val { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
+    .stat .lbl { font-size: 0.65rem; color: #888; margin-top: 4px; }
+
+    /* ─── フォーム ─── */
+    label { font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px; }
+    input, textarea, select {
+      background: #111128; border: 1px solid #2a2a4a; color: #e0e0e0;
+      border-radius: 8px; padding: 10px 12px; width: 100%; font-size: 0.875rem;
+      outline: none; transition: border .2s; font-family: inherit;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #7c5cbf; }
+    textarea { resize: vertical; }
+    .field { margin-bottom: 14px; }
+    .char-count { font-size: 0.68rem; color: #666; text-align: right; margin-top: 3px; }
+
+    /* ─── ボタン ─── */
+    .btn { border: none; border-radius: 8px; padding: 10px 20px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: opacity .15s; white-space: nowrap; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary   { background: linear-gradient(135deg,#7c5cbf,#5c3fa0); color: #fff; }
+    .btn-danger    { background: linear-gradient(135deg,#c0392b,#922b21); color: #fff; }
+    .btn-secondary { background: #1e1e38; color: #aaa; border: 1px solid #2a2a4a; }
+    .btn-sm        { padding: 6px 14px; font-size: 0.78rem; }
+    .btn-full      { width: 100%; }
+
+    /* ─── タブ ─── */
+    .tabs { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+    .tab { padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; border: 1px solid transparent; transition: all .15s; color: #888; }
+    .tab:hover { background: #1e1e38; color: #ccc; }
+    .tab.active { background: #7c5cbf; color: #fff; border-color: #7c5cbf; }
+
+    /* ─── テーブル ─── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { color: #888; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 1px solid #2a2a4a; }
+    td { padding: 9px 10px; border-bottom: 1px solid #1e1e38; color: #ccc; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(124,92,191,.07); }
+
+    /* ─── バッジ ─── */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
+    .badge-green  { background: #0d3321; color: #34d399; }
+    .badge-blue   { background: #0c1a3a; color: #60a5fa; }
+    .badge-gray   { background: #1e1e2e; color: #9ca3af; }
+    .badge-yellow { background: #2a1e00; color: #fbbf24; }
+    .badge-red    { background: #2a0a0a; color: #f87171; }
+
+    /* ─── ログ ─── */
+    .log-box { background: #08080f; border: 1px solid #1a1a2a; border-radius: 8px; padding: 12px; max-height: 260px; overflow-y: auto; font-size: 0.72rem; font-family: monospace; }
+    .log-entry { padding: 2px 0; }
+    .log-ok   { color: #34d399; }
+    .log-err  { color: #f87171; }
+    .log-info { color: #60a5fa; }
+    .log-warn { color: #fbbf24; }
+
+    /* ─── プログレス ─── */
+    .progress-wrap { height: 6px; background: #1e1e38; border-radius: 3px; overflow: hidden; margin-top: 10px; display: none; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,#7c5cbf,#f59e0b); border-radius: 3px; width: 0; transition: width .3s; }
+
+    /* ─── DB接続ドット ─── */
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-ok  { background: #34d399; }
+    .dot-err { background: #f87171; }
+
+    /* ─── ログイン ─── */
+    #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 16px; padding: 36px 28px; width: 100%; max-width: 360px; text-align: center; }
+    .login-box h1 { font-size: 1.3rem; font-weight: 900; color: #fff; margin: 12px 0 6px; }
+    .login-box p  { font-size: 0.8rem; color: #888; margin-bottom: 24px; }
+
+    /* ─── パネル非表示制御 ─── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    @media (max-width: 600px) {
+      .status-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ─── 次にやること ウィジェット ─── */
+    #todoWidget {
+      background: #13132a;
+      border-bottom: 1px solid #2a2a4a;
+      padding: 0;
+      overflow: hidden;
+      transition: max-height .4s ease;
+    }
+    #todoWidget.collapsed { max-height: 42px; }
+    #todoWidget.expanded  { max-height: 600px; }
+    .todo-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; cursor: pointer; user-select: none;
+    }
+    .todo-header-left { display: flex; align-items: center; gap: 10px; }
+    .todo-title { font-size: .82rem; font-weight: 700; color: #fff; }
+    .todo-summary { font-size: .72rem; color: #888; }
+    .todo-chevron { font-size: .8rem; color: #888; transition: transform .3s; }
+    #todoWidget.expanded .todo-chevron { transform: rotate(180deg); }
+    .todo-body { padding: 0 20px 14px; }
+    .todo-step {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 9px 12px; border-radius: 10px; margin-bottom: 6px;
+      border: 1px solid transparent; transition: all .2s;
+    }
+    .todo-step.done    { background: #0a1f14; border-color: #34d39922; }
+    .todo-step.active  { background: #1a1228; border-color: #7c5cbf66; }
+    .todo-step.pending { background: #111128; border-color: #2a2a4a; opacity: .6; }
+    .todo-step-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .todo-step-body { flex: 1; min-width: 0; }
+    .todo-step-label {
+      font-size: .8rem; font-weight: 700;
+      color: #fff;
+    }
+    .todo-step.done .todo-step-label { color: #34d399; }
+    .todo-step-desc { font-size: .72rem; color: #888; margin-top: 2px; line-height: 1.5; }
+    .todo-step-action {
+      flex-shrink: 0; font-size: .72rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      border: none; transition: opacity .15s;
+    }
+    .todo-step-action:hover { opacity: .8; }
+    .todo-step-action.act-primary { background: #7c5cbf; color: #fff; }
+    .todo-step-action.act-ok      { background: #0d3321; color: #34d399; cursor: default; pointer-events: none; }
+    .todo-step-action.act-warn    { background: #2a1e00; color: #fbbf24; }
+    .todo-progress-bar {
+      height: 3px; background: #1e1e38; border-radius: 2px;
+      margin: 8px 20px 0;
+    }
+    .todo-progress-fill {
+      height: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, #7c5cbf, #34d399);
+      transition: width .5s ease;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:3rem;">⚡</div>
+    <h1>管理者パネル</h1>
+    <p>Saikou! 運営専用</p>
+    <div class="field">
+      <input type="password" id="pwInput" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">ログイン</button>
+    <p id="loginErr" style="color:#f87171;font-size:.8rem;margin-top:10px;display:none;"></p>
+  </div>
+</div>
+
+<!-- メイン -->
+<div id="mainScreen" style="display:none;">
+
+  <div class="header">
+    <div>
+      <h1>⚡ Saikou! 管理者パネル</h1>
+      <div class="sub" id="hdrSub">読み込み中...</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="dot dot-ok" id="dbDot"></span>
+      <span style="font-size:.75rem;color:#888;" id="dbLabel">DB接続中...</span>
+      <button class="btn btn-secondary btn-sm" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <!-- ══════ 次にやること ウィジェット ══════ -->
+  <div id="todoWidget" class="collapsed">
+    <div class="todo-progress-bar"><div class="todo-progress-fill" id="todoProgressFill" style="width:0%"></div></div>
+    <div class="todo-header" onclick="toggleTodoWidget()">
+      <div class="todo-header-left">
+        <span style="font-size:1rem;">📋</span>
+        <span class="todo-title">次にやること</span>
+        <span class="todo-summary" id="todoSummary">確認中...</span>
+      </div>
+      <span class="todo-chevron">▼</span>
+    </div>
+    <div class="todo-body" id="todoBody">
+      <!-- JS で動的に生成 -->
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ステータス -->
+    <div class="status-row">
+      <div class="stat"><div class="val" id="stTotal">—</div><div class="lbl">総ユーザー</div></div>
+      <div class="stat"><div class="val" id="stToday">—</div><div class="lbl">本日確定済み</div></div>
+      <div class="stat"><div class="val" id="stNotYet">—</div><div class="lbl">本日未達成</div></div>
+      <div class="stat"><div class="val" id="stNotif">—</div><div class="lbl">未読通知数</div></div>
+    </div>
+
+    <!-- タブ -->
+    <div class="tabs">
+      <div class="tab active" id="tab-push"    onclick="switchTab('push')">📢 通知送信</div>
+      <div class="tab"        id="tab-users"   onclick="switchTab('users')">👥 ユーザー</div>
+      <div class="tab"        id="tab-history" onclick="switchTab('history')">📋 通知履歴</div>
+      <div class="tab"        id="tab-setup"   onclick="switchTab('setup')">⚙️ 設定ガイド</div>
+    </div>
+
+    <!-- ======== 通知送信パネル ======== -->
+    <div class="panel active" id="panel-push">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- 送信フォーム -->
+        <div class="card">
+          <h2>📢 プッシュ通知送信</h2>
+
+          <div class="field">
+            <label>送信対象</label>
+            <select id="targetSel" onchange="onTargetChange()">
+              <option value="all">🌍 全ユーザー</option>
+              <option value="not_today">⚠️ 本日まだ達成していないユーザー</option>
+              <option value="active">🔥 直近7日アクティブ</option>
+              <option value="inactive">😴 7日以上未使用</option>
+              <option value="single">👤 特定ユーザー（メール）</option>
+            </select>
+          </div>
+
+          <div class="field" id="singleRow" style="display:none;">
+            <label>メールアドレス</label>
+            <input type="email" id="singleEmail" placeholder="user@example.com">
+          </div>
+
+          <div class="field">
+            <label>通知種別</label>
+            <select id="notifTypeSel">
+              <option value="admin_broadcast">📢 お知らせ</option>
+              <option value="friend_not_committed">💪 継続を促す</option>
+              <option value="encouragement">📣 応援</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>タイトル（任意）</label>
+            <input type="text" id="notifTitle" placeholder="例: 今日もタスクを達成しよう！" maxlength="60">
+          </div>
+
+          <div class="field">
+            <label>メッセージ本文 <span style="color:#f87171;">*</span></label>
+            <textarea id="notifMsg" rows="4" placeholder="例: まだ今日のタスクを確定していません！今すぐアプリを開いて達成しましょう🔥" maxlength="300" oninput="document.getElementById('charCount').textContent=this.value.length"></textarea>
+            <div class="char-count"><span id="charCount">0</span>/300</div>
+          </div>
+
+          <div class="field">
+            <label>送信者名</label>
+            <input type="text" id="fromName" value="Saikou! 運営" maxlength="30">
+          </div>
+
+          <div style="background:#111128;border-radius:8px;padding:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.82rem;color:#aaa;">対象ユーザー数</span>
+            <span style="font-size:1.2rem;font-weight:900;color:#fff;" id="targetCount">—</span>
+          </div>
+
+          <!-- Edge Function ステータス -->
+          <div id="edgeFnBadge" style="border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.75rem;font-weight:600;text-align:center;">
+            確認中...
+          </div>
+
+          <div class="progress-wrap" id="progWrap">
+            <div class="progress-fill" id="progFill"></div>
+          </div>
+
+          <button class="btn btn-primary btn-full" id="sendBtn" onclick="sendNotif()" style="margin-top:12px;" disabled>
+            📢 送信する
+          </button>
+        </div>
+
+        <!-- 送信ログ -->
+        <div class="card">
+          <h2 style="justify-content:space-between;">
+            📋 送信ログ
+            <button class="btn btn-secondary btn-sm" onclick="clearLog()">クリア</button>
+          </h2>
+          <div class="log-box" id="logBox">
+            <div class="log-entry log-info">[起動] 管理者パネル v2.0</div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <h2>⚡ クイック送信</h2>
+            <p style="font-size:.78rem;color:#888;margin-bottom:10px;">よく使うテンプレートをワンクリック送信</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-secondary" onclick="quickSend('not_today','friend_not_committed','⏰ まだ達成してませんよ！','今日のタスクをまだ確定していません。今すぐアプリを開いて達成しましょう🔥')">
+                ⚠️ 未達成ユーザーへリマインド
+              </button>
+              <button class="btn btn-secondary" onclick="quickSend('active','encouragement','📣 一緒に頑張ろう！','今日もタスクを達成して継続を伸ばしましょう！💪')">
+                💪 アクティブユーザーへ応援
+              </button>
+              <button class="btn btn-secondary" onclick="quickSend('inactive','admin_broadcast','👋 お久しぶりです！','しばらく会っていませんね。今日からまた一緒に頑張りましょう！🌟')">
+                💤 離脱ユーザーへ復帰促進
+              </button>
+              <button class="btn btn-secondary" onclick="quickSend('all','admin_broadcast','📢 お知らせ','新機能が追加されました！最新バージョンをお試しください 🎉')">
+                📢 全員へお知らせ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== ユーザーパネル ======== -->
+    <div class="panel" id="panel-users">
+      <div class="card">
+        <h2 style="justify-content:space-between;">
+          👥 ユーザー一覧
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="userSearch" placeholder="名前 / メール検索" style="width:180px;" oninput="filterUsers()">
+            <button class="btn btn-secondary btn-sm" onclick="loadUsers()">🔄 更新</button>
+          </div>
+        </h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>名前</th>
+                <th>メール</th>
+                <th>継続日数</th>
+                <th>最終確定</th>
+                <th>本日</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="userTbody">
+              <tr><td colspan="6" style="text-align:center;padding:30px;color:#666;">読み込み中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:.72rem;color:#666;margin-top:8px;" id="userInfo"></div>
+      </div>
+    </div>
+
+    <!-- ======== 通知履歴パネル ======== -->
+    <div class="panel" id="panel-history">
+      <div class="card">
+        <h2 style="justify-content:space-between;">
+          📋 送信済み通知（最新100件）
+          <button class="btn btn-secondary btn-sm" onclick="loadHistory()">🔄 更新</button>
+        </h2>
+        <div id="historyList"><p style="text-align:center;color:#666;padding:30px;">読み込み中...</p></div>
+      </div>
+    </div>
+
+    <!-- ======== Supabase 設定ガイドパネル ======== -->
+    <div class="panel" id="panel-setup">
+      <div class="card">
+        <h2>⚙️ Supabase Realtime 有効化ガイド</h2>
+        <p style="font-size:.82rem;color:#aaa;margin-bottom:20px;">
+          通知がリアルタイムで届くには、Supabase の <strong style="color:#fff;">Publications</strong> 設定が必要です。<br>
+          以下の手順を順番に実施してください。
+        </p>
+
+        <!-- Step 1 -->
+        <div style="background:#111128;border:1px solid #2a2a4a;border-radius:10px;padding:18px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="background:#7c5cbf;color:#fff;font-weight:900;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;">1</span>
+            <h3 style="font-size:.9rem;font-weight:700;color:#fff;margin:0;">Supabase Dashboard を開く</h3>
+          </div>
+          <p style="font-size:.8rem;color:#aaa;line-height:1.6;">
+            <a href="https://supabase.com/dashboard" target="_blank" style="color:#7c5cbf;">https://supabase.com/dashboard</a> を開き、<br>
+            プロジェクト <code style="background:#1a1a3a;padding:1px 6px;border-radius:4px;">mthfqqqukuvueprdokiq</code> を選択
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="background:#111128;border:1px solid #2a2a4a;border-radius:10px;padding:18px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="background:#7c5cbf;color:#fff;font-weight:900;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;">2</span>
+            <h3 style="font-size:.9rem;font-weight:700;color:#fff;margin:0;">Database → <span style="color:#f59e0b;">Publications</span> を開く</h3>
+          </div>
+          <p style="font-size:.8rem;color:#aaa;line-height:1.6;">
+            左メニューの <strong style="color:#fff;">Database</strong> → <strong style="color:#f59e0b;">Publications</strong> をクリック<br>
+            ⚠️ <strong style="color:#f87171;">「Replication」ではなく「Publications」です！</strong>
+          </p>
+          <div style="background:#2a1e00;border:1px solid #f59e0b33;border-radius:8px;padding:10px 12px;margin-top:8px;">
+            <p style="font-size:.75rem;color:#fbbf24;">
+              📍 メニューの場所：<br>
+              左サイドバー → Table Editor の下 → Database セクション → <strong>Publications</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="background:#111128;border:1px solid #2a2a4a;border-radius:10px;padding:18px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="background:#7c5cbf;color:#fff;font-weight:900;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;">3</span>
+            <h3 style="font-size:.9rem;font-weight:700;color:#fff;margin:0;"><code style="background:#1a1a3a;padding:1px 8px;border-radius:4px;font-size:.85rem;">supabase_realtime</code> をクリック</h3>
+          </div>
+          <p style="font-size:.8rem;color:#aaa;line-height:1.6;">
+            一覧に表示される <code style="background:#1a1a3a;padding:1px 6px;border-radius:4px;">supabase_realtime</code> をクリックして詳細を開く
+          </p>
+        </div>
+
+        <!-- Step 4 -->
+        <div style="background:#111128;border:1px solid #34d399;border-radius:10px;padding:18px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="background:#059669;color:#fff;font-weight:900;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;">4</span>
+            <h3 style="font-size:.9rem;font-weight:700;color:#34d399;margin:0;">notifications テーブルを ON にする</h3>
+          </div>
+          <p style="font-size:.8rem;color:#aaa;line-height:1.6;">
+            <strong style="color:#fff;">Source tables</strong> セクションで <code style="background:#1a1a3a;padding:1px 6px;border-radius:4px;">notifications</code> テーブルのトグルを <strong style="color:#34d399;">ON</strong> にする<br>
+            （daily_status も ON にすると フレンド達成通知も動く）
+          </p>
+          <div style="background:#0d3321;border-radius:8px;padding:10px 12px;margin-top:8px;">
+            <p style="font-size:.75rem;color:#34d399;">
+              ✅ これで admin.html から通知を送ると、アプリにリアルタイムで届くようになります！
+            </p>
+          </div>
+        </div>
+
+        <!-- RLS ガイド -->
+        <div style="background:#0c1a0c;border:1px solid #f8717133;border-radius:10px;padding:18px;margin-bottom:14px;">
+          <h3 style="font-size:.9rem;font-weight:700;color:#f87171;margin-bottom:4px;">🚨 現在の問題: users テーブルが読めない</h3>
+          <p style="font-size:.78rem;color:#aaa;margin-bottom:12px;">
+            ログを見ると <strong style="color:#f87171;">「ユーザー 0 件取得」</strong> が発生しています。<br>
+            これは <code>users</code> テーブルの RLS が anon キーの SELECT を拒否しているためです。
+          </p>
+          <p style="font-size:.82rem;color:#fff;font-weight:700;margin-bottom:8px;">▼ Supabase SQL Editor でこれを実行してください：</p>
+          <div style="background:#08080f;border-radius:8px;padding:14px;font-family:monospace;font-size:.72rem;color:#c8f7c5;line-height:1.8;overflow-x:auto;">
+<pre id="sqlToCopy" style="margin:0;white-space:pre;">-- ① users テーブル: anon が SELECT できるようにする
+CREATE POLICY "admin_can_read_users"
+ON public.users FOR SELECT
+USING (true);
+
+-- ② daily_status テーブル: anon が SELECT できるようにする
+CREATE POLICY "admin_can_read_daily_status"
+ON public.daily_status FOR SELECT
+USING (true);
+
+-- ③ notifications テーブル: anon が INSERT できるようにする
+CREATE POLICY "admin_can_insert_notifications"
+ON public.notifications FOR INSERT
+WITH CHECK (true);
+
+-- ④ notifications テーブル: anon が SELECT できるようにする
+CREATE POLICY "admin_can_read_notifications"
+ON public.notifications FOR SELECT
+USING (true);
+
+-- ⑤ notifications テーブル: anon が UPDATE できるようにする（既読化）
+CREATE POLICY "admin_can_update_notifications"
+ON public.notifications FOR UPDATE
+USING (true);</pre>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="copySql()">
+            📋 SQL をコピー
+          </button>
+          <div id="copyMsg" style="display:none;color:#34d399;font-size:.75rem;margin-top:6px;">✅ コピーしました！Supabase SQL Editor に貼り付けて実行してください</div>
+          <div style="background:#2a1e00;border:1px solid #f59e0b33;border-radius:8px;padding:10px 12px;margin-top:10px;">
+            <p style="font-size:.75rem;color:#fbbf24;">
+              ⚠️ すでに同名ポリシーがある場合はエラーになります。<br>
+              その場合は <code>DROP POLICY IF EXISTS</code> で削除してから再実行するか、<br>
+              Supabase Dashboard の <strong>Authentication → Policies</strong> から既存ポリシーを確認してください。
+            </p>
+          </div>
+        </div>
+
+        <!-- 通知テスト -->
+        <div style="background:#111128;border:1px solid #2a2a4a;border-radius:10px;padding:18px;margin-bottom:14px;">
+          <h3 style="font-size:.9rem;font-weight:700;color:#fff;margin-bottom:12px;">🧪 RLS 診断テスト</h3>
+          <p style="font-size:.8rem;color:#aaa;margin-bottom:14px;">
+            上のSQLを実行後、ここで全テーブルにアクセスできるか確認してください：
+          </p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="testRealtimeSetup()">
+              🔍 RLS 診断テスト
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('push')">
+              📢 通知送信パネルへ
+            </button>
+          </div>
+          <div id="realtimeTestResult" style="margin-top:14px;display:none;"></div>
+        </div>
+
+        <!-- Edge Function デプロイ手順 -->
+        <div style="background:#111128;border:1px solid #2a2a4a;border-radius:10px;padding:18px;">
+          <h3 style="font-size:.9rem;font-weight:700;color:#fff;margin-bottom:4px;">
+            🚀 Edge Function デプロイ（アプリを閉じていても届く）
+          </h3>
+          <p style="font-size:.78rem;color:#aaa;margin-bottom:14px;">
+            現在のステータス: <span id="edgeFnStatusText" style="font-weight:700;">確認中...</span>
+          </p>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+
+            <!-- Step A -->
+            <div style="background:#0c0c1a;border-radius:8px;padding:14px;">
+              <p style="font-size:.82rem;color:#fff;font-weight:700;margin-bottom:6px;">A. Supabase CLI をインストール</p>
+              <div style="background:#08080f;border-radius:6px;padding:10px;font-family:monospace;font-size:.72rem;color:#c8f7c5;">
+                <div>npm install -g supabase</div>
+              </div>
+            </div>
+
+            <!-- Step B -->
+            <div style="background:#0c0c1a;border-radius:8px;padding:14px;">
+              <p style="font-size:.82rem;color:#fff;font-weight:700;margin-bottom:6px;">B. VAPID キーを生成・登録</p>
+              <div style="background:#08080f;border-radius:6px;padding:10px;font-family:monospace;font-size:.72rem;color:#c8f7c5;line-height:1.8;">
+                <div style="color:#888;"># Node.js で VAPID キーを生成</div>
+                <div>npx web-push generate-vapid-keys</div>
+                <div style="color:#888;margin-top:6px;"># 生成されたキーを Supabase に登録</div>
+                <div>supabase secrets set VAPID_PUBLIC_KEY=&lt;公開鍵&gt;</div>
+                <div>supabase secrets set VAPID_PRIVATE_KEY=&lt;秘密鍵&gt;</div>
+                <div>supabase secrets set VAPID_SUBJECT=mailto:your@email.com</div>
+              </div>
+              <div style="background:#2a1e00;border-radius:6px;padding:8px 10px;margin-top:8px;">
+                <p style="font-size:.72rem;color:#fbbf24;">
+                  ⚠️ 公開鍵は index.html の <code>VAPID_PUBLIC_KEY</code> にも設定してください
+                </p>
+              </div>
+            </div>
+
+            <!-- Step C -->
+            <div style="background:#0c0c1a;border-radius:8px;padding:14px;">
+              <p style="font-size:.82rem;color:#fff;font-weight:700;margin-bottom:6px;">C. Edge Function をデプロイ</p>
+              <div style="background:#08080f;border-radius:6px;padding:10px;font-family:monospace;font-size:.72rem;color:#c8f7c5;line-height:1.8;">
+                <div style="color:#888;"># プロジェクトにログイン</div>
+                <div>supabase login</div>
+                <div>supabase link --project-ref mthfqqqukuvueprdokiq</div>
+                <div style="color:#888;margin-top:6px;"># デプロイ</div>
+                <div>supabase functions deploy send-push-notification</div>
+              </div>
+            </div>
+
+            <!-- Step D -->
+            <div style="background:#0c0c1a;border-radius:8px;padding:14px;">
+              <p style="font-size:.82rem;color:#fff;font-weight:700;margin-bottom:6px;">D. push_subscriptions テーブルを作成</p>
+              <div style="background:#08080f;border-radius:6px;padding:10px;font-family:monospace;font-size:.72rem;color:#c8f7c5;line-height:1.8;overflow-x:auto;">
+<pre style="margin:0;">CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    text NOT NULL UNIQUE,
+  endpoint   text NOT NULL,
+  p256dh     text NOT NULL,
+  auth       text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.push_subscriptions
+  USING (true) WITH CHECK (true);</pre>
+              </div>
+            </div>
+
+            <div style="background:#0d3321;border:1px solid #34d39933;border-radius:8px;padding:10px 12px;">
+              <p style="font-size:.75rem;color:#34d399;">
+                ✅ デプロイ完了後、このページをリロードすると「Edge Function 有効」に変わります
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /mainScreen -->
+
+<script>
+// ===== 設定 =====
+const SB_URL       = 'https://mthfqqqukuvueprdokiq.supabase.co';
+const SB_KEY       = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10aGZxcXF1a3V2dWVwcmRva2lxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyMTIwNzYsImV4cCI6MjA4Njc4ODA3Nn0.kCs-13w1ctUkGWE-i8Aix8wusWlFZXNZRoDjYwBzDcY';
+const ADMIN_PW     = 'saikou-admin-2026';
+// Edge Function の URL（デプロイ後に自動設定される）
+const EDGE_FN_URL  = `${SB_URL}/functions/v1/send-push-notification`;
+
+let sb = null;
+let allUsers = [];
+let filteredUsers = [];
+let edgeFnAvailable = false; // Edge Function が使えるか（デプロイ済みか）
+
+// ===== ログイン =====
+function doLogin() {
+  const pw = document.getElementById('pwInput').value;
+  if (pw !== ADMIN_PW) {
+    const el = document.getElementById('loginErr');
+    el.textContent = 'パスワードが違います';
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+    return;
+  }
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainScreen').style.display  = 'block';
+  init();
+}
+function doLogout() {
+  document.getElementById('mainScreen').style.display  = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('pwInput').value = '';
+}
+document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ===== 初期化 =====
+async function init() {
+  sb = supabase.createClient(SB_URL, SB_KEY);
+  log('Supabase 接続完了', 'ok');
+  document.getElementById('dbLabel').textContent = '接続済み';
+
+  // Edge Function の存在確認（OPTIONSリクエストで確認）
+  try {
+    const r = await fetch(EDGE_FN_URL, { method: 'OPTIONS' });
+    edgeFnAvailable = r.ok || r.status === 204;
+  } catch { edgeFnAvailable = false; }
+
+  updateEdgeFnStatus();
+  await loadStats();
+  await loadUsers();
+  updateTargetCount();
+  document.getElementById('sendBtn').disabled = false;
+
+  // 「次にやること」ウィジェットを診断・表示
+  await runTodoDiagnosis();
+}
+
+function updateEdgeFnStatus() {
+  const badge = document.getElementById('edgeFnBadge');
+  const text  = document.getElementById('edgeFnStatusText');
+  if (edgeFnAvailable) {
+    if (badge) {
+      badge.textContent = '✅ Edge Function 有効 — アプリを閉じていても届きます';
+      badge.style.background = '#0d3321';
+      badge.style.color = '#34d399';
+      badge.style.border = '1px solid #34d39933';
+    }
+    if (text) { text.textContent = '✅ デプロイ済み（有効）'; text.style.color = '#34d399'; }
+  } else {
+    if (badge) {
+      badge.textContent = '⚠️ Edge Function 未デプロイ — アプリを開いている人のみに届きます';
+      badge.style.background = '#2a1e00';
+      badge.style.color = '#fbbf24';
+      badge.style.border = '1px solid #f59e0b33';
+    }
+    if (text) { text.textContent = '⚠️ 未デプロイ（下の手順でデプロイしてください）'; text.style.color = '#fbbf24'; }
+  }
+}
+
+// ===== タブ =====
+const TABS = ['push','users','history','setup'];
+function switchTab(t) {
+  TABS.forEach(id => {
+    document.getElementById('tab-' + id).className  = 'tab' + (id === t ? ' active' : '');
+    document.getElementById('panel-' + id).className = 'panel' + (id === t ? ' active' : '');
+  });
+  if (t === 'history') loadHistory();
+}
+
+// ===== 統計読み込み =====
+async function loadStats() {
+  try {
+    const today = todayStr();
+    const [usersRes, todayRes, notifRes] = await Promise.all([
+      sb.from('users').select('id', { count: 'exact', head: true }),
+      sb.from('daily_status').select('user_id, is_committed').eq('date', today),
+      sb.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false)
+    ]);
+    const total     = usersRes.count ?? 0;
+    const committed = (todayRes.data || []).filter(r => r.is_committed).length;
+    const notYet    = total - committed;
+    const notif     = notifRes.count ?? 0;
+
+    document.getElementById('stTotal').textContent = total;
+    document.getElementById('stToday').textContent = committed;
+    document.getElementById('stNotYet').textContent = notYet;
+    document.getElementById('stNotif').textContent = notif;
+    document.getElementById('hdrSub').textContent = `ユーザー ${total} 人 / 本日確定 ${committed} 人`;
+    log(`統計: 総 ${total} 人, 本日確定 ${committed} 人, 未確定 ${notYet} 人`, 'info');
+  } catch(e) {
+    log('統計取得失敗: ' + e.message, 'err');
+    document.getElementById('dbDot').className = 'dot dot-err';
+  }
+}
+
+// ===== ユーザー読み込み =====
+async function loadUsers() {
+  log('ユーザー取得中...', 'info');
+  try {
+    const today = todayStr();
+    const [usersRes, statusRes] = await Promise.all([
+      sb.from('users').select('id, display_name, email, current_streak, last_commit_date').order('current_streak', { ascending: false }),
+      sb.from('daily_status').select('user_id, is_committed, done_count').eq('date', today)
+    ]);
+
+    // RLS エラー検出
+    if (usersRes.error) {
+      log(`❌ users テーブルエラー: ${usersRes.error.message}`, 'err');
+      log('⚙️ 設定ガイドタブの SQL を実行してください', 'warn');
+      // 設定ガイドタブに自動遷移
+      switchTab('setup');
+      document.getElementById('realtimeTestResult').style.display = 'block';
+      document.getElementById('realtimeTestResult').innerHTML = `
+        <div style="background:#2a0a0a;border:1px solid #f8717133;border-radius:8px;padding:12px;">
+          <p style="color:#f87171;font-weight:700;margin-bottom:6px;">❌ users テーブルが読めません</p>
+          <p style="font-size:.78rem;color:#aaa;">エラー: ${esc(usersRes.error.message)}</p>
+          <p style="font-size:.78rem;color:#fbbf24;margin-top:6px;">▲ 上の SQL をコピーして Supabase SQL Editor で実行してください</p>
+        </div>`;
+      return;
+    }
+
+    allUsers      = usersRes.data || [];
+    filteredUsers = [...allUsers];
+    const todayMap = {};
+    (statusRes.data || []).forEach(s => todayMap[s.user_id] = s);
+    window._todayMap = todayMap;
+    renderUserTable();
+    updateTargetCount();
+    document.getElementById('sendBtn').disabled = false;
+
+    if (allUsers.length === 0) {
+      log('⚠️ ユーザー 0 件 → RLSポリシー未設定の可能性。設定ガイドタブを確認してください', 'warn');
+    } else {
+      log(`ユーザー ${allUsers.length} 件取得`, 'ok');
+    }
+  } catch(e) {
+    log('ユーザー取得失敗: ' + e.message, 'err');
+    log('⚙️ 設定ガイドタブの SQL を実行してください', 'warn');
+  }
+}
+
+function renderUserTable() {
+  const tbody   = document.getElementById('userTbody');
+  const todayMap = window._todayMap || {};
+  if (!filteredUsers.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#666;">該当なし</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filteredUsers.map(u => {
+    const streak  = u.current_streak || 0;
+    const sc      = streak >= 30 ? '#fbbf24' : streak >= 10 ? '#34d399' : '#9ca3af';
+    const last    = u.last_commit_date ? new Date(u.last_commit_date).toLocaleDateString('ja-JP') : '—';
+    const daysAgo = u.last_commit_date ? Math.floor((Date.now() - new Date(u.last_commit_date)) / 86400000) : 999;
+    const actBadge = daysAgo === 0 ? '<span class="badge badge-green">今日</span>'
+      : daysAgo <= 7 ? `<span class="badge badge-blue">${daysAgo}日前</span>`
+      : `<span class="badge badge-gray">${daysAgo}日前</span>`;
+    const ts  = todayMap[u.id];
+    const todayBadge = ts?.is_committed
+      ? (ts.done_count === 3 ? '<span class="badge badge-yellow">⭐ 達成</span>' : '<span class="badge badge-green">● 確定</span>')
+      : '<span class="badge badge-red">○ 未確定</span>';
+    return `<tr>
+      <td style="font-weight:600;color:#fff;">${esc(u.display_name||'—')}</td>
+      <td style="color:#888;font-size:.78rem;">${esc(u.email||'—')}</td>
+      <td style="font-weight:700;color:${sc};">${streak}日</td>
+      <td>${actBadge}</td>
+      <td>${todayBadge}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="sendToUser('${u.id}','${esc(u.display_name||'')}')">通知</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('userInfo').textContent = `${filteredUsers.length} / ${allUsers.length} 件`;
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  filteredUsers = allUsers.filter(u =>
+    (u.display_name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)
+  );
+  renderUserTable();
+}
+
+// ===== 通知履歴 =====
+async function loadHistory() {
+  document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:#666;padding:30px;">読み込み中...</p>';
+  try {
+    const { data } = await sb.from('notifications')
+      .select('id, type, message, from_name, is_read, created_at, to_user_id')
+      .order('created_at', { ascending: false }).limit(100);
+    if (!data || !data.length) {
+      document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:#666;padding:30px;">履歴なし</p>';
+      return;
+    }
+    const icons = { admin_broadcast:'📢', encouragement:'📣', friend_achievement:'🎉', friend_not_committed:'💪', reminder:'⏰' };
+    document.getElementById('historyList').innerHTML = `<table>
+      <thead><tr><th>種別</th><th>メッセージ</th><th>送信者</th><th>日時</th><th>既読</th></tr></thead>
+      <tbody>${data.map(n => `<tr>
+        <td>${icons[n.type]||'🔔'} <span style="font-size:.7rem;color:#888;">${n.type}</span></td>
+        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(n.message||'')}</td>
+        <td style="color:#888;font-size:.78rem;">${esc(n.from_name||'—')}</td>
+        <td style="color:#888;font-size:.72rem;">${new Date(n.created_at).toLocaleString('ja-JP')}</td>
+        <td>${n.is_read ? '<span class="badge badge-gray">既読</span>' : '<span class="badge badge-yellow">未読</span>'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) {
+    log('履歴取得失敗: ' + e.message, 'err');
+  }
+}
+
+// ===== 通知送信（二段階：Realtime INSERT + Edge Function Web Push） =====
+async function sendNotif() {
+  const target   = document.getElementById('targetSel').value;
+  const type     = document.getElementById('notifTypeSel').value;
+  const title    = document.getElementById('notifTitle').value.trim();
+  const message  = document.getElementById('notifMsg').value.trim();
+  const fromName = document.getElementById('fromName').value.trim() || 'Saikou! 運営';
+
+  if (!message) { log('❌ メッセージを入力してください', 'err'); return; }
+
+  const targets = await resolveTargets(target);
+  if (!targets.length) { log('⚠️ 対象ユーザーが0人です', 'warn'); return; }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true; btn.textContent = '送信中...';
+  const prog = document.getElementById('progWrap');
+  const fill = document.getElementById('progFill');
+  prog.style.display = 'block'; fill.style.width = '0%';
+
+  const fullMsg = title ? `【${title}】\n${message}` : message;
+  const BATCH = 50;
+  let realtimeSent = 0, pushSent = 0, pushFailed = 0;
+
+  log(`📢 ${targets.length} 人に送信開始（${type}）`, 'info');
+
+  // ── STEP 1: notifications テーブルへ INSERT（Realtimeでアプリ開いてる人に届く）──
+  log('① Realtime 通知を INSERT 中...', 'info');
+  for (let i = 0; i < targets.length; i += BATCH) {
+    const batch = targets.slice(i, i + BATCH);
+    const rows  = batch.map(u => ({
+      to_user_id:   u.id,
+      from_user_id: null,
+      type,
+      message:      fullMsg,
+      from_name:    fromName,
+      is_read:      false
+    }));
+    const { error } = await sb.from('notifications').insert(rows);
+    if (error) {
+      log(`❌ Realtime INSERT エラー: ${error.message}`, 'err');
+    } else {
+      realtimeSent += batch.length;
+      fill.style.width = Math.round(realtimeSent / targets.length * 50) + '%'; // 0〜50%
+    }
+    await sleep(60);
+  }
+  log(`✅ Realtime: ${realtimeSent} 件 INSERT 完了`, 'ok');
+
+  // ── STEP 2: Edge Function で Web Push（アプリ閉じてる人に届く）──
+  if (edgeFnAvailable) {
+    log('② Web Push を Edge Function 経由で送信中...', 'info');
+    try {
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SB_KEY}`
+        },
+        body: JSON.stringify({
+          user_ids: targets.map(u => u.id),
+          title:    title || getDefaultTitle(type, fromName),
+          body:     message,
+          type,
+          url:      '/',
+        })
+      });
+
+      fill.style.width = '90%';
+
+      if (!res.ok) {
+        const errText = await res.text();
+        log(`❌ Web Push エラー (${res.status}): ${errText}`, 'err');
+      } else {
+        const result = await res.json();
+        pushSent   = result.sent   ?? 0;
+        pushFailed = result.failed ?? 0;
+        const total = result.total ?? 0;
+        if (total === 0) {
+          log('⚠️ Web Push: 購読者なし（アプリで通知許可が必要）', 'warn');
+        } else {
+          log(`✅ Web Push: ${pushSent}/${total} 件成功、${pushFailed} 件失敗`, pushFailed > 0 ? 'warn' : 'ok');
+          if (result.expired_removed > 0) {
+            log(`🗑️ 期限切れ購読 ${result.expired_removed} 件を削除`, 'info');
+          }
+        }
+      }
+    } catch (e) {
+      log(`❌ Edge Function 呼び出し失敗: ${e.message}`, 'err');
+    }
+  } else {
+    log('⚠️ Edge Function 未デプロイ → Web Push はスキップ（設定ガイドタブを確認）', 'warn');
+  }
+
+  fill.style.width = '100%';
+  setTimeout(() => { prog.style.display = 'none'; fill.style.width = '0%'; }, 600);
+
+  // 結果サマリー
+  const summary = edgeFnAvailable
+    ? `🎉 完了！Realtime: ${realtimeSent} 件 ／ Web Push: ${pushSent} 件`
+    : `🎉 完了！Realtime: ${realtimeSent} 件（Web Push: 未設定）`;
+  log(summary, 'ok');
+
+  btn.disabled = false; btn.textContent = '📢 送信する';
+  document.getElementById('notifMsg').value   = '';
+  document.getElementById('notifTitle').value = '';
+  document.getElementById('charCount').textContent = '0';
+  await loadStats();
+}
+
+// 通知タイプ別のデフォルトタイトル
+function getDefaultTitle(type, fromName) {
+  const map = {
+    admin_broadcast:      `📢 ${fromName} からのお知らせ`,
+    encouragement:        `📣 ${fromName} さんから応援！`,
+    friend_not_committed: `💪 ${fromName} さんが未達成`,
+    reminder:             `⏰ Saikou! リマインダー`,
+  };
+  return map[type] || `🔔 ${fromName}`;
+}
+
+// ターゲット解決
+async function resolveTargets(target) {
+  const today = todayStr();
+  if (target === 'all') return allUsers;
+
+  if (target === 'not_today') {
+    // 今日まだ is_committed=false または daily_status レコードなし
+    const { data: committed } = await sb.from('daily_status')
+      .select('user_id').eq('date', today).eq('is_committed', true);
+    const committedIds = new Set((committed||[]).map(r => r.user_id));
+    return allUsers.filter(u => !committedIds.has(u.id));
+  }
+
+  if (target === 'active') {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+    const cs = fmtDate(cutoff);
+    return allUsers.filter(u => u.last_commit_date && u.last_commit_date >= cs);
+  }
+  if (target === 'inactive') {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+    const cs = fmtDate(cutoff);
+    return allUsers.filter(u => !u.last_commit_date || u.last_commit_date < cs);
+  }
+  if (target === 'single') {
+    const email = document.getElementById('singleEmail').value.trim();
+    const u = allUsers.find(x => x.email === email);
+    if (!u) { log(`❌ ${email} が見つかりません`, 'err'); return []; }
+    return [u];
+  }
+  return allUsers;
+}
+
+// 特定ユーザー個別送信（ユーザー一覧から）
+async function sendToUser(uid, name) {
+  const msg = prompt(`「${name}」さんへのメッセージ:`);
+  if (!msg) return;
+
+  // Realtime
+  const { error } = await sb.from('notifications').insert({
+    to_user_id: uid, from_user_id: null,
+    type: 'admin_broadcast', message: msg,
+    from_name: 'Saikou! 運営', is_read: false
+  });
+  if (error) { log('❌ Realtime 送信失敗: ' + error.message, 'err'); alert('送信失敗'); return; }
+  log(`✅ ${name} さんへ Realtime 送信完了`, 'ok');
+
+  // Web Push
+  if (edgeFnAvailable) {
+    try {
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SB_KEY}` },
+        body: JSON.stringify({ user_ids: [uid], title: '📢 Saikou! 運営からのお知らせ', body: msg, type: 'admin_broadcast', url: '/' })
+      });
+      const result = await res.json();
+      if (result.sent > 0) log(`✅ ${name} さんへ Web Push 送信完了`, 'ok');
+      else log(`⚠️ ${name} さんの Web Push 購読なし（アプリで通知許可が必要）`, 'warn');
+    } catch(e) {
+      log(`⚠️ Web Push スキップ: ${e.message}`, 'warn');
+    }
+  }
+
+  alert(`✅ ${name} さんへ通知を送りました`);
+}
+
+// クイック送信
+async function quickSend(target, type, title, message) {
+  document.getElementById('targetSel').value    = target;
+  document.getElementById('notifTypeSel').value = type;
+  document.getElementById('notifTitle').value   = title;
+  document.getElementById('notifMsg').value     = message;
+  document.getElementById('charCount').textContent = message.length;
+  switchTab('push');
+  await updateTargetCount();
+  if (confirm(`「${title}」を送信しますか？\n対象: ${document.getElementById('targetCount').textContent}`)) {
+    sendNotif();
+  }
+}
+
+// ===== ターゲット数プレビュー =====
+async function updateTargetCount() {
+  const target = document.getElementById('targetSel')?.value;
+  if (!allUsers.length) { document.getElementById('targetCount').textContent = '—'; return; }
+  const targets = await resolveTargets(target);
+  document.getElementById('targetCount').textContent = targets.length + ' 人';
+}
+
+function onTargetChange() {
+  const v = document.getElementById('targetSel').value;
+  document.getElementById('singleRow').style.display = v === 'single' ? 'block' : 'none';
+  updateTargetCount();
+}
+
+// ===== ログ =====
+function log(msg, type = 'info') {
+  const box = document.getElementById('logBox');
+  const div = document.createElement('div');
+  div.className = 'log-entry log-' + type;
+  const t = new Date().toLocaleTimeString('ja-JP');
+  div.textContent = `[${t}] ${msg}`;
+  box.prepend(div);
+  while (box.children.length > 300) box.lastChild.remove();
+}
+function clearLog() { document.getElementById('logBox').innerHTML = ''; }
+
+// ===== 「次にやること」ウィジェット =====
+
+let todoWidgetExpanded = false;
+
+function toggleTodoWidget() {
+  todoWidgetExpanded = !todoWidgetExpanded;
+  const w = document.getElementById('todoWidget');
+  w.className = todoWidgetExpanded ? 'expanded' : 'collapsed';
+}
+
+async function runTodoDiagnosis() {
+  const steps = await diagnoseTodoSteps();
+  renderTodoWidget(steps);
+}
+
+// 各ステップを実際にチェックして状態を返す
+async function diagnoseTodoSteps() {
+  const steps = [];
+
+  // ─── STEP 1: users テーブルが読める ───
+  let usersOk = false;
+  try {
+    const { data, error } = await sb.from('users').select('id').limit(1);
+    usersOk = !error;
+  } catch { usersOk = false; }
+
+  steps.push({
+    id: 'rls_users',
+    label: 'RLS ポリシーを設定する',
+    desc: usersOk
+      ? 'users / daily_status / notifications テーブルにアクセスできます'
+      : 'users テーブルが読めません。SQL Editor で RLS ポリシーを実行してください',
+    done: usersOk,
+    actionLabel: usersOk ? '✅ 完了' : '→ 設定ガイドを見る',
+    actionType:  usersOk ? 'ok' : 'primary',
+    onClick: usersOk ? null : () => switchTab('setup'),
+  });
+
+  // ─── STEP 2: Supabase Realtime（Publications）───
+  // notifications テーブルへの INSERT を Realtime 監視できるか
+  // → 直接チェックは難しいので「ユーザーが確認済みか」をローカル保存で管理
+  const realtimeConfirmed = localStorage.getItem('saikou_realtime_confirmed') === 'true';
+  steps.push({
+    id: 'realtime',
+    label: 'Supabase Realtime を有効化する',
+    desc: realtimeConfirmed
+      ? 'Database → Publications → supabase_realtime → notifications テーブル ON 済み'
+      : 'Database → Publications → supabase_realtime → notifications テーブルを ON にしてください',
+    done: realtimeConfirmed,
+    actionLabel: realtimeConfirmed ? '✅ 完了' : '→ 確認した',
+    actionType:  realtimeConfirmed ? 'ok' : 'warn',
+    onClick: realtimeConfirmed ? null : () => {
+      localStorage.setItem('saikou_realtime_confirmed', 'true');
+      runTodoDiagnosis();
+    },
+    hint: realtimeConfirmed ? null : 'Supabase Dashboard → Database → Publications → supabase_realtime をクリック → notifications を ON',
+  });
+
+  // ─── STEP 3: ユーザーが存在する ───
+  const userCount = allUsers.length;
+  const usersExist = userCount > 0;
+  steps.push({
+    id: 'users_exist',
+    label: 'ユーザーがいる',
+    desc: usersExist
+      ? `${userCount} 人のユーザーが登録されています`
+      : 'まだユーザーがいません。アプリを開いてアカウントを作成してください',
+    done: usersExist,
+    actionLabel: usersExist ? `✅ ${userCount} 人` : '→ アプリを開く',
+    actionType:  usersExist ? 'ok' : 'warn',
+    onClick: usersExist ? null : () => window.open('/', '_blank'),
+  });
+
+  // ─── STEP 4: push_subscriptions テーブルが存在する ───
+  let pushTableOk = false;
+  try {
+    const { error } = await sb.from('push_subscriptions').select('id').limit(1);
+    pushTableOk = !error;
+  } catch { pushTableOk = false; }
+
+  steps.push({
+    id: 'push_table',
+    label: 'push_subscriptions テーブルを作成する',
+    desc: pushTableOk
+      ? 'Web Push 購読テーブルが存在します'
+      : 'SQL Editor で push_subscriptions テーブルを作成してください（設定ガイド参照）',
+    done: pushTableOk,
+    actionLabel: pushTableOk ? '✅ 完了' : '→ 設定ガイドを見る',
+    actionType:  pushTableOk ? 'ok' : 'primary',
+    onClick: pushTableOk ? null : () => switchTab('setup'),
+  });
+
+  // ─── STEP 5: アプリで通知許可 & push_subscriptions に登録済み ───
+  let pushSubCount = 0;
+  if (pushTableOk) {
+    try {
+      const { count } = await sb.from('push_subscriptions').select('id', { count: 'exact', head: true });
+      pushSubCount = count ?? 0;
+    } catch { pushSubCount = 0; }
+  }
+  const pushSubOk = pushSubCount > 0;
+  steps.push({
+    id: 'push_subscribed',
+    label: 'アプリで通知を許可する',
+    desc: pushSubOk
+      ? `${pushSubCount} 人が Web Push を購読中（アプリ閉じてても届く）`
+      : 'アプリ（index.html）を開いて設定タブ → 通知を許可 してください',
+    done: pushSubOk,
+    actionLabel: pushSubOk ? `✅ ${pushSubCount} 人` : '→ アプリを開く',
+    actionType:  pushSubOk ? 'ok' : 'warn',
+    onClick: pushSubOk ? null : () => window.open('/', '_blank'),
+  });
+
+  // ─── STEP 6: Edge Function がデプロイ済み ───
+  steps.push({
+    id: 'edge_fn',
+    label: 'Edge Function をデプロイする（任意・推奨）',
+    desc: edgeFnAvailable
+      ? 'send-push-notification がデプロイ済み。アプリを閉じていても届きます'
+      : '未デプロイ。設定ガイドのコマンドを実行するとアプリ閉じてても届くようになります',
+    done: edgeFnAvailable,
+    actionLabel: edgeFnAvailable ? '✅ 完了' : '→ 手順を見る',
+    actionType:  edgeFnAvailable ? 'ok' : 'warn',
+    onClick: edgeFnAvailable ? null : () => switchTab('setup'),
+    optional: true,
+  });
+
+  return steps;
+}
+
+function renderTodoWidget(steps) {
+  const doneCount = steps.filter(s => s.done).length;
+  const total     = steps.length;
+  const allDone   = doneCount === total;
+  const pct       = Math.round(doneCount / total * 100);
+
+  // プログレスバー
+  document.getElementById('todoProgressFill').style.width = pct + '%';
+
+  // サマリー
+  const nextStep = steps.find(s => !s.done);
+  const summary  = allDone
+    ? '✅ すべて完了！通知が正常に動作します'
+    : `${doneCount}/${total} 完了 — 次: ${nextStep?.label ?? ''}`;
+  document.getElementById('todoSummary').textContent = summary;
+
+  // 未完了があれば自動展開
+  if (!allDone && !todoWidgetExpanded) {
+    todoWidgetExpanded = true;
+    document.getElementById('todoWidget').className = 'expanded';
+  }
+
+  // ステップ描画
+  document.getElementById('todoBody').innerHTML = steps.map((s, i) => {
+    const stateClass = s.done ? 'done' : (i === steps.findIndex(x => !x.done) ? 'active' : 'pending');
+    const icon = s.done ? '✅' : (stateClass === 'active' ? '▶️' : '○');
+    const actionBtn = s.onClick
+      ? `<button class="todo-step-action act-${s.actionType}" onclick="todoStepActions[${i}]()">${s.actionLabel}</button>`
+      : `<span class="todo-step-action act-${s.actionType}">${s.actionLabel}</span>`;
+    const hint = s.hint && !s.done
+      ? `<div style="margin-top:5px;padding:6px 10px;background:#0c0c1a;border-radius:6px;font-size:.7rem;color:#9ca3af;line-height:1.5;">${s.hint}</div>`
+      : '';
+    const optionalTag = s.optional ? ' <span style="font-size:.65rem;color:#888;font-weight:400;">(任意)</span>' : '';
+    return `
+      <div class="todo-step ${stateClass}">
+        <span class="todo-step-icon">${icon}</span>
+        <div class="todo-step-body">
+          <div class="todo-step-label">STEP ${i + 1}: ${s.label}${optionalTag}</div>
+          <div class="todo-step-desc">${s.desc}</div>
+          ${hint}
+        </div>
+        ${actionBtn}
+      </div>`;
+  }).join('');
+
+  // コールバックをグローバル配列に保存（onclick で呼べるように）
+  window.todoStepActions = steps.map(s => s.onClick || (() => {}));
+}
+
+// ===== Realtime テスト & 診断 =====
+async function testRealtimeSetup() {
+  const res = document.getElementById('realtimeTestResult');
+  res.style.display = 'block';
+  res.innerHTML = '<div class="log-entry log-info">🔍 診断中...</div>';
+
+  const results = [];
+  const tables = ['users', 'daily_status', 'notifications'];
+
+  for (const tbl of tables) {
+    try {
+      const { data, error } = await sb.from(tbl).select('id').limit(1);
+      if (error) throw error;
+      results.push({ tbl, ok: true, count: data?.length ?? 0 });
+    } catch(e) {
+      results.push({ tbl, ok: false, msg: e.message });
+    }
+  }
+
+  const allOk = results.every(r => r.ok);
+  const rows  = results.map(r => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1e1e38;">
+      <span style="font-size:1rem;">${r.ok ? '✅' : '❌'}</span>
+      <code style="color:${r.ok ? '#34d399' : '#f87171'};flex:1;">${r.tbl}</code>
+      <span style="font-size:.75rem;color:${r.ok ? '#34d399' : '#f87171'};">
+        ${r.ok ? 'OK' : 'RLSブロック: ' + r.msg}
+      </span>
+    </div>`).join('');
+
+  res.innerHTML = `
+    <div style="background:${allOk ? '#0d3321' : '#2a0a0a'};border:1px solid ${allOk ? '#34d399' : '#f87171'}33;border-radius:8px;padding:14px;">
+      <p style="color:${allOk ? '#34d399' : '#f87171'};font-weight:700;margin-bottom:10px;">
+        ${allOk ? '✅ 全テーブルにアクセス可能！通知送信できます' : '❌ アクセスできないテーブルがあります → 上のSQLを実行してください'}
+      </p>
+      ${rows}
+      ${allOk ? `<p style="font-size:.78rem;color:#aaa;margin-top:10px;">
+        次のステップ：📢 通知送信パネルで「特定ユーザー」を選び、自分のメールで送信テストしてください
+      </p>` : `<p style="font-size:.78rem;color:#fbbf24;margin-top:10px;">
+        ⚠️ 上の「SQL をコピー」ボタンでコピーし、Supabase SQL Editor に貼り付けて実行してください
+      </p>`}
+    </div>`;
+
+  if (allOk) {
+    await loadUsers();
+    log('✅ 診断OK: 全テーブルにアクセス可能', 'ok');
+  }
+}
+
+function copySql() {
+  const sql = document.getElementById('sqlToCopy').textContent;
+  navigator.clipboard.writeText(sql).then(() => {
+    const msg = document.getElementById('copyMsg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 4000);
+  }).catch(() => {
+    // フォールバック
+    const ta = document.createElement('textarea');
+    ta.value = sql;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const msg = document.getElementById('copyMsg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 4000);
+  });
+}
+
+// ===== ユーティリティ =====
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

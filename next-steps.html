@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saikou! 次のステップ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brown: #5c3d2e;
+      --light-brown: #8b6355;
+      --gold: #c9a96e;
+      --beige: #f7f3ef;
+      --green: #16a34a;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --purple: #7c3aed;
+      --orange: #ea580c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', 'DM Sans', sans-serif;
+      background: #f5f0eb;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    /* ヘッダー */
+    .header {
+      background: linear-gradient(135deg, var(--brown) 0%, #3d2314 100%);
+      color: white;
+      padding: 32px 24px 28px;
+      text-align: center;
+    }
+    .header h1 { font-size: 1.6rem; font-weight: 900; letter-spacing: 0.06em; }
+    .header .sub { font-size: 0.9rem; opacity: 0.75; margin-top: 6px; }
+    .header .version {
+      display: inline-block;
+      margin-top: 12px;
+      background: var(--gold);
+      color: var(--brown);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 12px;
+      border-radius: 99px;
+    }
+
+    /* コンテンツ */
+    .content { max-width: 680px; margin: 0 auto; padding: 24px 16px 80px; }
+
+    /* セクションタイトル */
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--light-brown);
+      text-transform: uppercase;
+      margin: 32px 0 12px;
+    }
+
+    /* カード */
+    .card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 12px;
+    }
+
+    /* STEP カード */
+    .step-card { border-left: 4px solid var(--gold); }
+    .step-card .step-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 18px 18px 0;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 900;
+      color: white;
+    }
+    .step-num.done    { background: var(--green); }
+    .step-num.now     { background: var(--orange); }
+    .step-num.pending { background: #d1d5db; color: #6b7280; }
+    .step-title {
+      flex: 1;
+      padding-top: 4px;
+    }
+    .step-title h3 { font-size: 1rem; font-weight: 700; color: var(--brown); }
+    .step-title .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      margin-top: 4px;
+    }
+    .badge-done    { background: #dcfce7; color: var(--green); }
+    .badge-now     { background: #fff7ed; color: var(--orange); }
+    .badge-pending { background: #f3f4f6; color: #6b7280; }
+
+    .step-body { padding: 12px 18px 18px 68px; }
+    .step-body p { font-size: 0.875rem; color: #555; line-height: 1.7; }
+
+    /* コードブロック */
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      margin-top: 10px;
+      overflow-x: auto;
+      position: relative;
+    }
+    .code-block .comment { color: #6a9955; }
+    .code-block .keyword { color: #569cd6; }
+    .code-block .string  { color: #ce9178; }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #3c3c3c;
+      color: #ccc;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover { background: #555; color: white; }
+    .copy-btn.copied { background: var(--green); color: white; }
+
+    /* サブステップリスト */
+    .sub-steps { margin-top: 10px; }
+    .sub-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0ebe5;
+    }
+    .sub-step:last-child { border-bottom: none; }
+    .sub-step .icon { flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+    .sub-step .text { font-size: 0.85rem; color: #444; line-height: 1.5; }
+    .sub-step .text strong { color: var(--brown); font-weight: 700; }
+    .sub-step .text a {
+      color: var(--blue);
+      word-break: break-all;
+      font-size: 0.8rem;
+    }
+
+    /* URL カード */
+    .url-card {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: var(--blue);
+      word-break: break-all;
+      font-weight: 600;
+    }
+
+    /* 警告ボックス */
+    .warn-box {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #9a3412;
+      line-height: 1.6;
+    }
+
+    /* 成功ボックス */
+    .ok-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #166534;
+      line-height: 1.6;
+    }
+
+    /* チェックリストカード */
+    .checklist-card .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid #f5f0eb;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .checklist-card .item:last-child { border-bottom: none; }
+    .checklist-card .item:hover { background: #fafaf8; }
+    .checklist-card .item input[type="checkbox"] {
+      width: 20px; height: 20px;
+      accent-color: var(--green);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checklist-card .item label {
+      font-size: 0.9rem;
+      color: #333;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+    .checklist-card .item.checked label { text-decoration: line-through; color: #999; }
+
+    /* フッター */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    /* アニメーション */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card { animation: fadeIn 0.3s ease both; }
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.10s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.20s; }
+    .card:nth-child(5) { animation-delay: 0.25s; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ Saikou! 次のステップ</h1>
+  <p class="sub">バックグラウンド通知を完成させ、App Store へ！</p>
+  <span class="version">現在 v9.1.0</span>
+</div>
+
+<div class="content">
+
+  <!-- ===== 今すぐやること ===== -->
+  <p class="section-label">🔥 今すぐやること（順番通りに）</p>
+
+  <!-- STEP 1 -->
+  <div class="card step-card">
+    <div class="step-header">
+      <div class="step-num now">1</div>
+      <div class="step-title">
+        <h3>Supabaseにテーブルを追加</h3>
+        <span class="badge badge-now">⏳ 今すぐ実行</span>
+      </div>
+    </div>
+    <div class="step-body">
+      <p>プッシュ通知の購読情報を保存するテーブルを作ります。</p>
+      <div class="url-card">
+        🔗 <a href="https://supabase.com/dashboard/project/mthfqqqukuvueprdokiq/sql" target="_blank">
+          https://supabase.com/dashboard/project/mthfqqqukuvueprdokiq/sql
+        </a>
+      </div>
+      <div class="sub-steps">
+        <div class="sub-step">
+          <span class="icon">①</span>
+          <span class="text">上のリンクを開き <strong>「+ New query」</strong> をクリック</span>
+        </div>
+        <div class="sub-step">
+          <span class="icon">②</span>
+          <span class="text">下のSQLを貼り付けて <strong>「Run」</strong> を実行</span>
+        </div>
+        <div class="sub-step">
+          <span class="icon">③</span>
+          <span class="text"><strong>「Success. No rows returned」</strong> が表示されたら完了 ✅</span>
+        </div>
+      </div>
+      <div class="code-block" id="sql1">
+<button class="copy-btn" onclick="copyCode('sql1', this)">コピー</button><span class="comment">-- プッシュ通知購読テーブル</span>
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  endpoint   TEXT NOT NULL,
+  p256dh     TEXT NOT NULL,
+  auth       TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "push_sub_insert" ON push_subscriptions FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "push_sub_select" ON push_subscriptions FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "push_sub_update" ON push_subscriptions FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "push_sub_delete" ON push_subscriptions FOR DELETE TO authenticated USING (auth.uid() = user_id);</div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="card step-card">
+    <div class="step-header">
+      <div class="step-num now">2</div>
+      <div class="step-title">
+        <h3>VAPIDキーを生成する</h3>
+        <span class="badge badge-now">⏳ 今すぐ実行</span>
+      </div>
+    </div>
+    <div class="step-body">
+      <p>「バックグラウンドでプッシュを送る権限証明書」を作ります。ターミナル（Mac: Terminal.app）で1行実行するだけです。</p>
+      <div class="code-block" id="vapid-cmd">
+<button class="copy-btn" onclick="copyCode('vapid-cmd', this)">コピー</button>npx web-push generate-vapid-keys</div>
+      <div class="sub-steps" style="margin-top:12px;">
+        <div class="sub-step">
+          <span class="icon">📋</span>
+          <span class="text">出力された <strong>Public Key</strong> と <strong>Private Key</strong> を メモ帳に保存しておく</span>
+        </div>
+        <div class="sub-step">
+          <span class="icon">✏️</span>
+          <span class="text"><strong>index.html の 6452行目あたり</strong> の <code>VAPID_PUBLIC_KEY</code> を生成した Public Key に書き換える</span>
+        </div>
+      </div>
+      <div class="warn-box">
+        ⚠️ ターミナルが苦手な場合は、以下のサイトでブラウザから生成できます：<br>
+        <a href="https://www.athenastudio.net/webpush/generate-vapid-keys" target="_blank" style="color:var(--blue);">https://www.athenastudio.net/webpush/generate-vapid-keys</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="card step-card">
+    <div class="step-header">
+      <div class="step-num now">3</div>
+      <div class="step-title">
+        <h3>Edge Function をデプロイ</h3>
+        <span class="badge badge-now">⏳ 今すぐ実行</span>
+      </div>
+    </div>
+    <div class="step-body">
+      <p>フレンドが確定したとき、サーバー側からプッシュを飛ばすプログラムを Supabase にアップします。</p>
+      <div class="sub-steps">
+        <div class="sub-step">
+          <span class="icon">①</span>
+          <span class="text">ターミナルでプロジェクトフォルダに移動して以下を実行：</span>
+        </div>
+      </div>
+      <div class="code-block" id="deploy-cmd">
+<button class="copy-btn" onclick="copyCode('deploy-cmd', this)">コピー</button><span class="comment"># Supabase CLI をインストール（初回のみ）</span>
+npm install -g supabase
+
+<span class="comment"># Supabase にログイン</span>
+supabase login
+
+<span class="comment"># プロジェクトをリンク</span>
+supabase link --project-ref mthfqqqukuvueprdokiq
+
+<span class="comment"># Edge Function をアップロード</span>
+supabase functions deploy notify-friend-commit</div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="card step-card">
+    <div class="step-header">
+      <div class="step-num now">4</div>
+      <div class="step-title">
+        <h3>Supabase に環境変数を設定</h3>
+        <span class="badge badge-now">⏳ 今すぐ実行</span>
+      </div>
+    </div>
+    <div class="step-body">
+      <p>VAPIDキーをSupabaseのサーバーに登録します。</p>
+      <div class="url-card">
+        🔗 <a href="https://supabase.com/dashboard/project/mthfqqqukuvueprdokiq/settings/functions" target="_blank">
+          Settings → Edge Functions → Secrets
+        </a>
+      </div>
+      <div class="sub-steps" style="margin-top:10px;">
+        <div class="sub-step">
+          <span class="icon">①</span>
+          <span class="text">上のリンクを開き <strong>「Add new secret」</strong> を3回クリック</span>
+        </div>
+        <div class="sub-step">
+          <span class="icon">②</span>
+          <span class="text">以下の3つを入力して保存：</span>
+        </div>
+      </div>
+      <div class="code-block" id="secrets">
+<button class="copy-btn" onclick="copyCode('secrets', this)">コピー</button>VAPID_PUBLIC_KEY  = (Step2で生成したPublic Key)
+VAPID_PRIVATE_KEY = (Step2で生成したPrivate Key)
+VAPID_SUBJECT     = mailto:your-email@gmail.com</div>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="card step-card">
+    <div class="step-header">
+      <div class="step-num now">5</div>
+      <div class="step-title">
+        <h3>Database Webhook を設定</h3>
+        <span class="badge badge-now">⏳ 今すぐ実行</span>
+      </div>
+    </div>
+    <div class="step-body">
+      <p>「daily_statusに確定レコードが追加されたら Edge Function を呼ぶ」トリガーを設定します。</p>
+      <div class="url-card">
+        🔗 <a href="https://supabase.com/dashboard/project/mthfqqqukuvueprdokiq/database/hooks" target="_blank">
+          Database → Webhooks
+        </a>
+      </div>
+      <div class="sub-steps" style="margin-top:10px;">
+        <div class="sub-step">
+          <span class="icon">①</span>
+          <span class="text">「<strong>Create a new hook</strong>」をクリック</span>
+        </div>
+        <div class="sub-step">
+          <span class="icon">②</span>
+          <span class="text">以下の通りに設定して保存：</span>
+        </div>
+      </div>
+      <div class="code-block" id="webhook-settings">
+<button class="copy-btn" onclick="copyCode('webhook-settings', this)">コピー</button>Name          : notify_friend_commit
+Table         : daily_status
+Events        : ✅ INSERT
+Type          : Supabase Edge Functions
+Edge Function : notify-friend-commit</div>
+    </div>
+  </div>
+
+  <!-- ===== 今日のテストリセット ===== -->
+  <p class="section-label">🗑️ テスト用 — 今日の達成をリセット</p>
+
+  <div class="card step-card" style="border-left-color: var(--purple);">
+    <div class="step-header">
+      <div class="step-num" style="background: var(--purple);">R</div>
+      <div class="step-title">
+        <h3>rikki5.929@gmail.com の今日をリセット</h3>
+        <span class="badge" style="background:#f3e8ff; color:var(--purple);">テスト用</span>
+      </div>
+    </div>
+    <div class="step-body">
+      <p>SQL Editor に貼り付けて「Run」を押すだけです。</p>
+      <div class="url-card">
+        🔗 <a href="https://supabase.com/dashboard/project/mthfqqqukuvueprdokiq/sql" target="_blank">
+          Supabase SQL Editor
+        </a>
+      </div>
+      <div class="code-block" id="reset-sql">
+<button class="copy-btn" onclick="copyCode('reset-sql', this)">コピー</button><span class="comment">-- 今日の確定レコードを削除</span>
+DELETE FROM daily_status
+WHERE user_id = (
+  SELECT u.id FROM users u
+  JOIN auth.users a ON a.id = u.id
+  WHERE a.email = <span class="string">'rikki5.929@gmail.com'</span>
+)
+AND date = <span class="string">'2026-02-23'</span>;</div>
+      <div class="ok-box">
+        ✅ 実行後、アプリを再読み込み（Cmd+Shift+R）すると「今日を確定」ボタンが復活します
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 完了後のテスト ===== -->
+  <p class="section-label">✅ Step 1〜5 完了後のテスト</p>
+
+  <div class="card checklist-card">
+    <div class="item" onclick="toggleCheck(this)">
+      <input type="checkbox" />
+      <label>アプリを開いてログイン → 設定 → 「通知を許可する」をタップ</label>
+    </div>
+    <div class="item" onclick="toggleCheck(this)">
+      <input type="checkbox" />
+      <label>Supabase の push_subscriptions テーブルに自分のレコードが保存されている</label>
+    </div>
+    <div class="item" onclick="toggleCheck(this)">
+      <input type="checkbox" />
+      <label>アプリを完全に閉じる（iPhoneならスワイプで終了）</label>
+    </div>
+    <div class="item" onclick="toggleCheck(this)">
+      <input type="checkbox" />
+      <label>別のアカウントでログインして「今日を確定」ボタンを押す</label>
+    </div>
+    <div class="item" onclick="toggleCheck(this)">
+      <input type="checkbox" />
+      <label>閉じた状態のiPhoneに「🎉 フレンドが今日を達成！」通知が届く</label>
+    </div>
+  </div>
+
+  <!-- ===== 注意事項 ===== -->
+  <p class="section-label">⚠️ iPhone での注意</p>
+
+  <div class="card" style="padding: 18px;">
+    <div class="sub-steps">
+      <div class="sub-step">
+        <span class="icon">📱</span>
+        <span class="text"><strong>iOS 16.4以上</strong> が必要。設定 → 一般 → ソフトウェアアップデートで確認</span>
+      </div>
+      <div class="sub-step">
+        <span class="icon">🏠</span>
+        <span class="text">Safari のバックグラウンドプッシュは <strong>ホーム画面に追加（PWA）した場合のみ</strong> 対応。Safari ブラウザからは届かない</span>
+      </div>
+      <div class="sub-step">
+        <span class="icon">🔔</span>
+        <span class="text">通知が届かない場合 → <strong>設定 → 通知 → Saikou!</strong> → 通知を許可 ON になっているか確認</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== その後の作業 ===== -->
+  <p class="section-label">🚀 その後やること（App Store 準備）</p>
+
+  <div class="card" style="padding: 18px;">
+    <div class="sub-steps">
+      <div class="sub-step">
+        <span class="icon">📸</span>
+        <span class="text"><strong>スクリーンショット撮影</strong>（iPhone 14 Pro Max・6.7インチで5枚）</span>
+      </div>
+      <div class="sub-step">
+        <span class="icon">🔨</span>
+        <span class="text"><strong>PWA Builder</strong> でアプリをビルド：<a href="https://www.pwabuilder.com" target="_blank">pwabuilder.com</a></span>
+      </div>
+      <div class="sub-step">
+        <span class="icon">📤</span>
+        <span class="text"><strong>App Store Connect</strong> にアップロード → 審査提出</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Saikou! v9.1.0 · 2026-02-23
+</div>
+
+<script>
+  function copyCode(id, btn) {
+    const el = document.getElementById(id);
+    // ボタン以外のテキストを取得
+    const temp = el.cloneNode(true);
+    temp.querySelectorAll('.copy-btn').forEach(b => b.remove());
+    const text = temp.innerText || temp.textContent;
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      btn.textContent = 'コピー完了 ✅';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'コピー';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // フォールバック
+      const ta = document.createElement('textarea');
+      ta.value = text.trim();
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = 'コピー完了 ✅';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'コピー';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function toggleCheck(item) {
+    const cb = item.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    if (cb.checked) {
+      item.classList.add('checked');
+    } else {
+      item.classList.remove('checked');
+    }
+  }
+</script>
+</body>
+</html>

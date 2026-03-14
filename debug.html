@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saikou Debug</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #00ff00;
+    }
+    .log {
+      background: #000;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #00ff00;
+      border-radius: 5px;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      background: #00ff00;
+      border: none;
+      border-radius: 5px;
+    }
+    .error { color: #ff0000; }
+    .success { color: #00ff00; }
+    .info { color: #ffff00; }
+  </style>
+</head>
+<body>
+  <h1>Saikou! デバッグページ</h1>
+  
+  <div class="log">
+    <h2>システムチェック</h2>
+    <div id="systemCheck"></div>
+  </div>
+  
+  <div class="log">
+    <h2>ボタンテスト</h2>
+    <button id="testBtn1" onclick="test1()">テスト1: シンプルクリック</button>
+    <button id="testBtn2">テスト2: onclick設定</button>
+    <button id="testBtn3">テスト3: addEventListener</button>
+    <div id="testResult"></div>
+  </div>
+  
+  <div class="log">
+    <h2>要素検索テスト</h2>
+    <button onclick="checkElements()">要素を確認</button>
+    <div id="elementCheck"></div>
+  </div>
+  
+  <div class="log">
+    <h2>Supabase接続テスト</h2>
+    <button onclick="testSupabase()">Supabase確認</button>
+    <div id="supabaseCheck"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  
+  <script>
+    const SUPABASE_URL = 'https://mthfqqqukuvueprdokiq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10aGZxcXF1a3V2dWVwcmRva2lxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyMTIwNzYsImV4cCI6MjA4Njc4ODA3Nn0.kCs-13w1ctUkGWE-i8Aix8wusWlFZXNZRoDjYwBzDcY';
+    
+    let supabase = null;
+    
+    // システムチェック
+    window.addEventListener('DOMContentLoaded', () => {
+      const systemCheck = document.getElementById('systemCheck');
+      let html = '';
+      
+      html += '<p class="success">✓ DOMContentLoaded イベント発火</p>';
+      html += `<p class="info">User Agent: ${navigator.userAgent}</p>`;
+      html += `<p class="info">画面サイズ: ${window.innerWidth}x${window.innerHeight}</p>`;
+      
+      // Supabase初期化
+      try {
+        if (window.supabase) {
+          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          html += '<p class="success">✓ Supabase初期化成功</p>';
+        } else {
+          html += '<p class="error">✗ Supabaseライブラリ未読み込み</p>';
+        }
+      } catch (e) {
+        html += `<p class="error">✗ Supabase初期化エラー: ${e.message}</p>`;
+      }
+      
+      systemCheck.innerHTML = html;
+      
+      // ボタン2の設定
+      const btn2 = document.getElementById('testBtn2');
+      btn2.onclick = function() {
+        test2();
+      };
+      
+      // ボタン3の設定
+      const btn3 = document.getElementById('testBtn3');
+      btn3.addEventListener('click', test3);
+    });
+    
+    function test1() {
+      const result = document.getElementById('testResult');
+      result.innerHTML += '<p class="success">✓ テスト1成功: onclick属性が動作</p>';
+    }
+    
+    function test2() {
+      const result = document.getElementById('testResult');
+      result.innerHTML += '<p class="success">✓ テスト2成功: onclick代入が動作</p>';
+    }
+    
+    function test3() {
+      const result = document.getElementById('testResult');
+      result.innerHTML += '<p class="success">✓ テスト3成功: addEventListenerが動作</p>';
+    }
+    
+    function checkElements() {
+      const check = document.getElementById('elementCheck');
+      let html = '<h3>index.htmlの要素チェック（実際のページで確認が必要）</h3>';
+      
+      const elements = [
+        'setupScreen',
+        'signupTab',
+        'loginTab',
+        'signupForm',
+        'loginForm',
+        'setupBtn',
+        'loginBtn',
+        'inviteCodeSetupInput',
+        'displayNameInput',
+        'loginDisplayNameInput',
+        'loginInviteCodeInput'
+      ];
+      
+      elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          html += `<p class="success">✓ ${id}: 存在</p>`;
+        } else {
+          html += `<p class="error">✗ ${id}: 見つからない</p>`;
+        }
+      });
+      
+      check.innerHTML = html;
+    }
+    
+    async function testSupabase() {
+      const check = document.getElementById('supabaseCheck');
+      let html = '';
+      
+      if (!supabase) {
+        html += '<p class="error">✗ Supabaseが初期化されていません</p>';
+        check.innerHTML = html;
+        return;
+      }
+      
+      try {
+        html += '<p class="info">→ usersテーブルを検索中...</p>';
+        check.innerHTML = html;
+        
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, display_name, invite_code')
+          .limit(5);
+        
+        if (error) {
+          html += `<p class="error">✗ エラー: ${error.message}</p>`;
+        } else {
+          html += `<p class="success">✓ 接続成功! ユーザー数: ${data.length}</p>`;
+          data.forEach(user => {
+            html += `<p class="info">  - ${user.display_name} (${user.invite_code})</p>`;
+          });
+        }
+      } catch (e) {
+        html += `<p class="error">✗ 例外: ${e.message}</p>`;
+      }
+      
+      check.innerHTML = html;
+    }
+    
+    // コンソールログをページに表示
+    const originalLog = console.log;
+    const originalError = console.error;
+    
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      const logDiv = document.createElement('div');
+      logDiv.className = 'log';
+      logDiv.innerHTML = '<p class="info">LOG: ' + args.join(' ') + '</p>';
+      document.body.appendChild(logDiv);
+    };
+    
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      const logDiv = document.createElement('div');
+      logDiv.className = 'log';
+      logDiv.innerHTML = '<p class="error">ERROR: ' + args.join(' ') + '</p>';
+      document.body.appendChild(logDiv);
+    };
+  </script>
+</body>
+</html>

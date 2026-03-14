@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  background-attachment: fixed;
+  color: #333;
+}
+
+.concrete-texture {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-md p-4 mb-4 border border-gray-200;
+}
+
+.btn-primary {
+  @apply bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-gray-300 text-darkGray font-semibold py-2 px-4 rounded-lg hover:bg-gray-400 transition;
+}
+
+.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}

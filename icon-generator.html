@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Saikou! Icon Generator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    .icon-preview {
+      margin: 20px 0;
+      display: inline-block;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      margin: 10px;
+      border-radius: 20%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Saikou! アイコンジェネレーター</h1>
+  <p>右クリックで各サイズの画像を保存してください</p>
+  
+  <div id="icons"></div>
+
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+    const container = document.getElementById('icons');
+
+    sizes.forEach(size => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#2c2c2c');
+      gradient.addColorStop(1, '#4a4a4a');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw star icon (⭐)
+      ctx.fillStyle = '#FFD700';
+      ctx.font = `bold ${size * 0.6}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⭐', size / 2, size / 2);
+
+      // Add label
+      const label = document.createElement('p');
+      label.textContent = `${size}x${size}`;
+      label.style.textAlign = 'center';
+      label.style.margin = '0';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'icon-preview';
+      wrapper.appendChild(canvas);
+      wrapper.appendChild(label);
+      container.appendChild(wrapper);
+
+      // Generate download link
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `icon-${size}x${size}.png`;
+      link.textContent = `Download ${size}x${size}`;
+      link.style.display = 'block';
+      link.style.textAlign = 'center';
+      link.style.marginBottom = '20px';
+      wrapper.appendChild(link);
+    });
+  </script>
+</body>
+</html>

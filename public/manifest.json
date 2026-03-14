@@ -1,0 +1,10 @@
+{
+  "name": "Saikou!",
+  "short_name": "Saikou",
+  "description": "習慣継続アプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#f5f5f5",
+  "icons": []
+}
