@@ -3825,7 +3825,15 @@
       document.getElementById('itemConfirmTitle').textContent = title;
       document.getElementById('itemConfirmDesc').textContent = desc;
       document.getElementById('itemConfirmCost').textContent = `💎 ${cost}`;
-      _itemConfirmCallback = onConfirm;
+      const canBuy = currentStones >= cost;
+      const okBtn = document.getElementById('itemConfirmOkBtn');
+      if (okBtn) {
+        okBtn.disabled = !canBuy;
+        okBtn.style.opacity = canBuy ? '1' : '0.45';
+        okBtn.style.cursor = canBuy ? 'pointer' : 'not-allowed';
+        okBtn.textContent = canBuy ? '購入する' : `💎不足（現在: ${currentStones}個）`;
+      }
+      _itemConfirmCallback = canBuy ? onConfirm : null;
       modal.classList.remove('hidden');
     }
     function closeItemConfirm() {
@@ -3842,10 +3850,6 @@
     async function handleBuyXp2x() {
       if (!currentUser) return;
       const cost = 20;
-      if (currentStones < cost) {
-        showToast(`XP2倍チケットには💎${cost}が必要です（現在: 💎${currentStones}）`, '#f87171');
-        return;
-      }
       if (isXp2xActive(currentUser.id)) {
         const expiryText = getXp2xExpiryText(currentUser.id);
         showToast(`すでにXP2倍チケットが有効です！${expiryText}まで有効`, '#ffd700');
@@ -3854,7 +3858,7 @@
       showItemConfirm('⚡', 'XP 2倍チケット', '購入から24時間、コミット時のXPが2倍になります。', cost, async () => {
         currentStones -= cost;
         saveStonesLocal(currentUser.id, currentStones);
-        await _saveStoresToSupabase(currentUser.id, currentStones);
+        await pushStonesToSupabase(currentUser.id, currentStones);
         const expiry24h = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
         localStorage.setItem(`saikou_xp2x_${currentUser.id}`, expiry24h);
         updateStoneUI();
@@ -3877,10 +3881,6 @@
     async function handleBuyTaskSlot() {
       if (!currentUser) return;
       const cost = 5;
-      if (currentStones < cost) {
-        showToast(`タスクスロット追加には💎${cost}が必要です（現在: 💎${currentStones}）`, '#f87171');
-        return;
-      }
       const currentMax = getMaxTasks(currentUser.id);
       if (currentMax >= 10) {
         showToast('タスクは最大10枚まで追加できます。', '#f87171');
@@ -3889,7 +3889,7 @@
       showItemConfirm('📋', 'タスク追加スロット', `タスク枠を${currentMax}枚 → ${currentMax + 1}枚に拡張します（永続有効）。`, cost, async () => {
       currentStones -= cost;
       saveStonesLocal(currentUser.id, currentStones);
-      await _saveStoresToSupabase(currentUser.id, currentStones);
+      await pushStonesToSupabase(currentUser.id, currentStones);
       const extraSlots = getExtraTaskSlots(currentUser.id) + 1;
       localStorage.setItem(`saikou_extra_slots_${currentUser.id}`, String(extraSlots));
       // Supabaseにも永続化（user_stonesテーブルのextra_task_slots列）
@@ -3923,10 +3923,6 @@
     async function handleBuyInsurance() {
       if (!currentUser) return;
       const cost = 70;
-      if (currentStones < cost) {
-        showToast(`7日保険には💎${cost}が必要です（現在: 💎${currentStones}）`, '#f87171');
-        return;
-      }
       if (isInsuranceActive(currentUser.id)) {
         const expiry = localStorage.getItem(`saikou_insurance_${currentUser.id}`);
         const expiryDate = new Date(expiry).toLocaleDateString('ja-JP');
@@ -3936,7 +3932,7 @@
       showItemConfirm('🛡️', '7日ストリーク保険', '今日から7日間、さぼってもストリークが継続します。', cost, async () => {
         currentStones -= cost;
         saveStonesLocal(currentUser.id, currentStones);
-        await _saveStoresToSupabase(currentUser.id, currentStones);
+        await pushStonesToSupabase(currentUser.id, currentStones);
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + 7);
         expiry.setHours(23, 59, 59, 999);
@@ -3967,11 +3963,9 @@
         const { data, error } = await supabase
           .from('user_stones').select('amount, extra_task_slots').eq('user_id', authUid).maybeSingle();
         if (!error && data) {
-          const dbStones = data.amount || 0;
-          if (dbStones > currentStones) {
-            currentStones = dbStones;
-            saveStonesLocal(userId, currentStones);
-          }
+          // 常にDBを正とする（デバイス間同期のため）
+          currentStones = data.amount || 0;
+          saveStonesLocal(userId, currentStones);
           // extra_task_slots をLocalStorageに同期（DBが上位）
           if (data.extra_task_slots != null) {
             const dbSlots = Math.max(0, parseInt(data.extra_task_slots) || 0);
@@ -4823,18 +4817,24 @@
         const userIds = [...new Set(filteredPosts.map(p => p.user_id))];
         let usersMap = {}, logsMap = {}, statsMap = {};
         if (userIds.length > 0) {
-          const [uRes, sRes] = await Promise.all([
-            supabase.from('users').select('id, display_name, avatar_url').in('id', userIds),
-            supabase.from('user_stats').select('user_id, total_xp, current_title').in('user_id', userIds)
-          ]);
+          const uRes = await supabase.from('users').select('id, display_name, avatar_url, auth_user_id').in('id', userIds);
           (uRes.data || []).forEach(u => { usersMap[u.id] = u; });
-          (sRes.data || []).forEach(s => { statsMap[s.user_id] = s; });
+          const authUids = (uRes.data || []).map(u => u.auth_user_id).filter(Boolean);
+          if (authUids.length > 0) {
+            const sRes = await supabase.from('user_stats').select('user_id, total_xp, current_title').in('user_id', authUids);
+            const authToUserId = {};
+            (uRes.data || []).forEach(u => { if (u.auth_user_id) authToUserId[u.auth_user_id] = u.id; });
+            (sRes.data || []).forEach(s => { const uid = authToUserId[s.user_id]; if (uid) statsMap[uid] = s; });
+          }
         }
         const logIds = filteredPosts.map(p => p.task_log_id).filter(Boolean);
         if (logIds.length > 0) {
           const { data: lData } = await supabase.from('task_logs').select('id,task_name,task_type,xp_earned,actual_value,unit').in('id', logIds);
           (lData || []).forEach(l => { logsMap[l.id] = l; });
         }
+
+        // いいね状態をDBから先読み
+        await _loadLikedPostIds(filteredPosts.map(p => p.id));
 
         if (listEl) {
           if (filteredPosts.length === 0) {
@@ -4869,12 +4869,15 @@
         const userIds = [...new Set((posts||[]).map(p=>p.user_id))];
         let usersMap={}, logsMap={}, statsMap={};
         if (userIds.length > 0) {
-          const [uR,sR] = await Promise.all([
-            supabase.from('users').select('id,display_name,avatar_url').in('id',userIds),
-            supabase.from('user_stats').select('user_id,total_xp,current_title').in('user_id',userIds)
-          ]);
+          const uR = await supabase.from('users').select('id,display_name,avatar_url,auth_user_id').in('id',userIds);
           (uR.data||[]).forEach(u=>{usersMap[u.id]=u;});
-          (sR.data||[]).forEach(s=>{statsMap[s.user_id]=s;});
+          const authUids = (uR.data||[]).map(u=>u.auth_user_id).filter(Boolean);
+          if (authUids.length > 0) {
+            const sR = await supabase.from('user_stats').select('user_id,total_xp,current_title').in('user_id',authUids);
+            const authToUid = {};
+            (uR.data||[]).forEach(u=>{ if(u.auth_user_id) authToUid[u.auth_user_id]=u.id; });
+            (sR.data||[]).forEach(s=>{ const uid=authToUid[s.user_id]; if(uid) statsMap[uid]=s; });
+          }
         }
         const logIds = (posts||[]).map(p=>p.task_log_id).filter(Boolean);
         if (logIds.length>0) {
@@ -4990,6 +4993,20 @@
         input.style.height = 'auto';
         await _loadPostComments(postId);
         showToast('✅ コメントを送信しました', '#00ff87');
+        // 投稿者へ通知（自分以外）
+        try {
+          const { data: postData } = await supabase.from('posts').select('user_id').eq('id', postId).single();
+          if (postData && postData.user_id !== currentUser.id) {
+            await supabase.from('notifications').insert({
+              to_user_id: postData.user_id,
+              from_user_id: currentUser.id,
+              type: 'post_comment',
+              message: `💬 ${currentUser.display_name || 'だれか'} さんがコメントしました: ${body.slice(0, 30)}${body.length > 30 ? '...' : ''}`,
+              from_name: currentUser.display_name || '',
+              is_read: false
+            });
+          }
+        } catch(e) { /* 通知失敗は無視 */ }
       } catch(e) {
         console.error('submitComment error:', e);
         showToast('⚠️ コメントの送信に失敗しました', '#f87171');
@@ -5014,7 +5031,7 @@
     }
 
     // ── いいね機能 ─────────────────────────────────────────────────
-    // LocalStorage でユーザーごとにいいね済みpost_idを管理
+    // LocalStorage キャッシュ（後方互換）
     function _getLikedSet(userId) {
       try {
         const raw = localStorage.getItem(`saikou_liked_${userId}`);
@@ -5024,32 +5041,52 @@
     function _saveLikedSet(userId, set) {
       try { localStorage.setItem(`saikou_liked_${userId}`, JSON.stringify([...set])); } catch(e) {}
     }
+
+    // Supabaseから取得したいいね済みpost_idセット（クロスデバイス対応）
+    let _likedPostIds = new Set();
+
     function isPostLiked(postId) {
       if (!currentUser) return false;
-      return _getLikedSet(currentUser.id).has(postId);
+      return _likedPostIds.has(postId) || _getLikedSet(currentUser.id).has(postId);
+    }
+
+    // タイムライン読み込み時にDBからいいね状態を取得
+    async function _loadLikedPostIds(postIds) {
+      if (!currentUser || !postIds || postIds.length === 0) return;
+      try {
+        const { data } = await supabase.from('post_likes')
+          .select('post_id')
+          .eq('user_id', currentUser.id)
+          .in('post_id', postIds);
+        (data || []).forEach(r => {
+          _likedPostIds.add(r.post_id);
+          const s = _getLikedSet(currentUser.id); s.add(r.post_id); _saveLikedSet(currentUser.id, s);
+        });
+      } catch(e) { console.warn('[likes] DB load error:', e); }
     }
 
     async function toggleLike(postId, btn) {
       if (!currentUser || !postId) return;
       const countEl = document.getElementById(`likeCount_${postId}`);
       const current = parseInt(countEl?.textContent || '0');
-      const likedSet = _getLikedSet(currentUser.id);
-      const isLiked = likedSet.has(postId);
+      const isLiked = _likedPostIds.has(postId) || _getLikedSet(currentUser.id).has(postId);
 
       if (isLiked) {
         // いいね解除
-        likedSet.delete(postId);
-        _saveLikedSet(currentUser.id, likedSet);
+        _likedPostIds.delete(postId);
+        const ls = _getLikedSet(currentUser.id); ls.delete(postId); _saveLikedSet(currentUser.id, ls);
         btn.dataset.liked = '0';
         btn.style.background = 'rgba(255,110,180,0.06)';
         btn.style.borderColor = 'rgba(255,110,180,0.25)';
+        btn.style.color = '#8ba0c0';
         const newCount = Math.max(0, current - 1);
         if (countEl) countEl.textContent = newCount;
         await supabase.from('posts').update({ likes_count: newCount }).eq('id', postId);
+        await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
       } else {
         // いいね
-        likedSet.add(postId);
-        _saveLikedSet(currentUser.id, likedSet);
+        _likedPostIds.add(postId);
+        const ls = _getLikedSet(currentUser.id); ls.add(postId); _saveLikedSet(currentUser.id, ls);
         btn.dataset.liked = '1';
         btn.style.background = 'rgba(255,110,180,0.25)';
         btn.style.borderColor = 'rgba(255,110,180,0.7)';
@@ -5057,6 +5094,21 @@
         const newCount = current + 1;
         if (countEl) countEl.textContent = newCount;
         await supabase.from('posts').update({ likes_count: newCount }).eq('id', postId);
+        await supabase.from('post_likes').insert({ post_id: postId, user_id: currentUser.id });
+        // 投稿者へ通知（自分以外）
+        try {
+          const { data: postData } = await supabase.from('posts').select('user_id').eq('id', postId).single();
+          if (postData && postData.user_id !== currentUser.id) {
+            await supabase.from('notifications').insert({
+              to_user_id: postData.user_id,
+              from_user_id: currentUser.id,
+              type: 'post_like',
+              message: `❤️ ${currentUser.display_name || 'だれか'} さんがあなたの投稿にいいねしました！`,
+              from_name: currentUser.display_name || '',
+              is_read: false
+            });
+          }
+        } catch(e) { /* 通知失敗は無視 */ }
       }
     }
     window.toggleLike = toggleLike;
@@ -8772,7 +8824,7 @@
     // 🛠️ DEV テストアカウント（開発・テスト専用）
     // 本番リリース前にこのブロックを削除 or DEV_MODE=false にする
     // ══════════════════════════════════════════════════════════════
-    const DEV_MODE = true; // ← 本番時は false に変更
+    const DEV_MODE = false; // ← 本番時は false に変更
 
     const DEV_TEST_ACCOUNTS = [
       { label: '🧪 テスト1',  email: 'test1@saikou.dev', password: 'saikou_test1', name: 'テストユーザー1' },
