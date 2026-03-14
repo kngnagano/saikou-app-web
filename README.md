@@ -4,7 +4,7 @@
 
 毎日の習慣を継続し、フレンドと一緒に目標達成を目指すPWAアプリ。
 
-- **バージョン**: v18.5.0
+- **バージョン**: v18.6.0
 - **本番URL**: https://gegsmoop.gensparkspace.com/
 - **技術スタック**: Pure HTML/CSS/JavaScript + Supabase + Service Worker (PWA)
 
