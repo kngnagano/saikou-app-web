@@ -4819,12 +4819,17 @@
         if (userIds.length > 0) {
           const uRes = await supabase.from('users').select('id, display_name, avatar_url, auth_user_id').in('id', userIds);
           (uRes.data || []).forEach(u => { usersMap[u.id] = u; });
+          // user_stats.user_id は auth_user_id か users.id のどちらかで保存されている可能性がある → 両方試す
           const authUids = (uRes.data || []).map(u => u.auth_user_id).filter(Boolean);
-          if (authUids.length > 0) {
-            const sRes = await supabase.from('user_stats').select('user_id, total_xp, current_title').in('user_id', authUids);
+          const allStatsIds = [...new Set([...userIds, ...authUids])];
+          if (allStatsIds.length > 0) {
+            const sRes = await supabase.from('user_stats').select('user_id, total_xp, current_title').in('user_id', allStatsIds);
             const authToUserId = {};
             (uRes.data || []).forEach(u => { if (u.auth_user_id) authToUserId[u.auth_user_id] = u.id; });
-            (sRes.data || []).forEach(s => { const uid = authToUserId[s.user_id]; if (uid) statsMap[uid] = s; });
+            (sRes.data || []).forEach(s => {
+              const uid = authToUserId[s.user_id] || (usersMap[s.user_id] ? s.user_id : null);
+              if (uid) statsMap[uid] = s;
+            });
           }
         }
         const logIds = filteredPosts.map(p => p.task_log_id).filter(Boolean);
@@ -4872,11 +4877,12 @@
           const uR = await supabase.from('users').select('id,display_name,avatar_url,auth_user_id').in('id',userIds);
           (uR.data||[]).forEach(u=>{usersMap[u.id]=u;});
           const authUids = (uR.data||[]).map(u=>u.auth_user_id).filter(Boolean);
-          if (authUids.length > 0) {
-            const sR = await supabase.from('user_stats').select('user_id,total_xp,current_title').in('user_id',authUids);
+          const allStatsIds = [...new Set([...userIds, ...authUids])];
+          if (allStatsIds.length > 0) {
+            const sR = await supabase.from('user_stats').select('user_id,total_xp,current_title').in('user_id',allStatsIds);
             const authToUid = {};
             (uR.data||[]).forEach(u=>{ if(u.auth_user_id) authToUid[u.auth_user_id]=u.id; });
-            (sR.data||[]).forEach(s=>{ const uid=authToUid[s.user_id]; if(uid) statsMap[uid]=s; });
+            (sR.data||[]).forEach(s=>{ const uid=authToUid[s.user_id]||(usersMap[s.user_id]?s.user_id:null); if(uid) statsMap[uid]=s; });
           }
         }
         const logIds = (posts||[]).map(p=>p.task_log_id).filter(Boolean);
