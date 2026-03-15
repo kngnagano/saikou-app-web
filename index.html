@@ -3883,10 +3883,60 @@
     function saveInventory(userId, inv) {
       localStorage.setItem(`saikou_inv_${userId}`, JSON.stringify(inv));
     }
+    // DB同期：アイテム数をSupabaseに書き込む
+    async function _syncItemToDb(type, quantity) {
+      const authUid = currentUser?.authUserId;
+      if (!authUid) return;
+      try {
+        await supabase.from('user_items').upsert(
+          { user_id: authUid, item_type: type, quantity: Math.max(0, quantity), updated_at: new Date().toISOString() },
+          { onConflict: 'user_id,item_type' }
+        );
+      } catch(e) { console.warn('[Inv] DB write failed:', e); }
+    }
+    // DB同期：発動中の効果の期限をSupabaseに書き込む
+    async function _syncEffectToDb(effectType, expiresAt) {
+      const authUid = currentUser?.authUserId;
+      if (!authUid) return;
+      try {
+        await supabase.from('user_item_effects').upsert(
+          { user_id: authUid, effect_type: effectType, expires_at: expiresAt },
+          { onConflict: 'user_id,effect_type' }
+        );
+      } catch(e) { console.warn('[Effects] DB write failed:', e); }
+    }
+    // ログイン時にDBからインベントリと効果を全デバイス同期
+    async function loadInventoryFromDB() {
+      const authUid = currentUser?.authUserId;
+      if (!authUid || !currentUser) return;
+      try {
+        const [{ data: items }, { data: effects }] = await Promise.all([
+          supabase.from('user_items').select('item_type, quantity').eq('user_id', authUid),
+          supabase.from('user_item_effects').select('effect_type, expires_at').eq('user_id', authUid)
+        ]);
+        if (items && items.length > 0) {
+          const inv = { xpboost: 0, recovery: 0, insurance: 0, task_slot: 0, task_slot_active: 0 };
+          items.forEach(r => { inv[r.item_type] = r.quantity || 0; });
+          saveInventory(currentUser.id, inv);
+          // task_slot_active = 有効化済みスロット数
+          if (inv.task_slot_active > 0) {
+            localStorage.setItem(`saikou_extra_slots_${currentUser.id}`, String(inv.task_slot_active));
+          }
+        }
+        (effects || []).forEach(e => {
+          if (new Date(e.expires_at) > new Date()) {
+            if (e.effect_type === 'xp2x') localStorage.setItem(`saikou_xp2x_${currentUser.id}`, e.expires_at);
+            if (e.effect_type === 'insurance') localStorage.setItem(`saikou_insurance_${currentUser.id}`, e.expires_at);
+          }
+        });
+        console.log('[Inv] DB sync OK:', getInventory(currentUser.id));
+      } catch(e) { console.warn('[Inv] DB sync failed, using localStorage:', e); }
+    }
     function addToInventory(userId, type, qty = 1) {
       const inv = getInventory(userId);
       inv[type] = (inv[type] || 0) + qty;
       saveInventory(userId, inv);
+      _syncItemToDb(type, inv[type]);
       return inv;
     }
     function useFromInventory(userId, type) {
@@ -3894,11 +3944,12 @@
       if ((inv[type] || 0) <= 0) return false;
       inv[type] -= 1;
       saveInventory(userId, inv);
+      _syncItemToDb(type, inv[type]);
       return true;
     }
     function getTotalInventoryCount(userId) {
       const inv = getInventory(userId);
-      return (inv.xpboost || 0) + (inv.recovery || 0) + (inv.insurance || 0);
+      return (inv.xpboost || 0) + (inv.recovery || 0) + (inv.insurance || 0) + (inv.task_slot || 0);
     }
 
     // Item acquired animation
@@ -3941,9 +3992,10 @@
       if (!listEl || !currentUser) return;
       const inv = getInventory(currentUser.id);
       const defs = [
-        { type: 'xpboost',  icon: '⚡', name: 'XP 2倍チケット',        desc: '使用から24時間、コミットXPが2倍', color: '#ffd700', useFn: 'handleUseXpBoost' },
-        { type: 'recovery', icon: '🔥', name: 'ストリーク回復チケット', desc: '1枚で失ったストリークを1日分回復',  color: '#b39dff', useFn: 'handleUseRecovery' },
-        { type: 'insurance',icon: '🛡️', name: 'ストリーク保険',         desc: '使用から7日間ストリーク継続',       color: '#ff6eb4', useFn: 'handleUseInsurance' },
+        { type: 'task_slot', icon: '📋', name: 'タスク追加スロット',     desc: '使用すると4枚目以降のタスク枠が追加（永続）',     color: '#00f5ff', useFn: 'handleUseTaskSlot' },
+        { type: 'recovery',  icon: '🔥', name: 'ストリーク回復チケット', desc: '1枚で失ったストリークを1日分回復（カレンダーに緑★）', color: '#b39dff', useFn: 'handleUseRecovery' },
+        { type: 'xpboost',   icon: '⚡', name: 'XP 2倍チケット',        desc: '使用から24時間、コミットXPが2倍',               color: '#ffd700', useFn: 'handleUseXpBoost' },
+        { type: 'insurance', icon: '🛡️', name: '7日ストリーク保険',      desc: '最大7日連続でさぼってもストリーク維持',            color: '#ff6eb4', useFn: 'handleUseInsurance' },
       ];
       listEl.innerHTML = defs.map(d => {
         const qty = inv[d.type] || 0;
@@ -3955,8 +4007,13 @@
           const exp = localStorage.getItem(`saikou_insurance_${currentUser.id}`);
           status = `<p style="font-size:0.63rem;color:#ff6eb4;margin-top:3px;">🛡️ 発動中 ${new Date(exp).toLocaleDateString('ja-JP')}まで</p>`;
         }
+        if (d.type === 'task_slot') {
+          const active = getExtraTaskSlots(currentUser.id);
+          if (active > 0) status = `<p style="font-size:0.63rem;color:#00f5ff;margin-top:3px;">現在のタスク枠: ${3 + active}枚</p>`;
+        }
+        const canUse = qty > 0;
         return `<div style="background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:1.25rem;padding:0.9rem 1rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:12px;">
-          <div style="font-size:2rem;flex-shrink:0;">${d.icon}</div>
+          <div style="font-size:2rem;flex-shrink:0;filter:drop-shadow(0 0 8px ${d.color}66);">${d.icon}</div>
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
               <span style="font-weight:900;font-size:0.85rem;color:${d.color};">${d.name}</span>
@@ -3965,10 +4022,11 @@
             <p style="font-size:0.65rem;color:#6b80a0;line-height:1.4;">${d.desc}</p>
             ${status}
           </div>
-          <button onclick="${d.useFn}()" ${qty <= 0 ? 'disabled' : ''} style="flex-shrink:0;padding:0.45rem 0.9rem;border-radius:0.85rem;${qty > 0 ? `background:linear-gradient(135deg,rgba(124,106,255,0.4),${d.color});color:white;cursor:pointer;` : 'background:rgba(255,255,255,0.05);color:#4a6080;cursor:not-allowed;'}font-weight:900;font-size:0.72rem;border:none;white-space:nowrap;opacity:${qty > 0 ? '1' : '0.45'};">${qty > 0 ? '使う' : '0個'}</button>
+          <button onclick="${d.useFn}()" ${!canUse ? 'disabled' : ''} style="flex-shrink:0;padding:0.45rem 0.9rem;border-radius:0.85rem;${canUse ? `background:linear-gradient(135deg,rgba(124,106,255,0.4),${d.color});color:white;cursor:pointer;` : 'background:rgba(255,255,255,0.05);color:#4a6080;cursor:not-allowed;'}font-weight:900;font-size:0.72rem;border:none;white-space:nowrap;opacity:${canUse ? '1' : '0.45'};">${canUse ? '使う' : '0個'}</button>
         </div>`;
       }).join('');
-      if (!inv.xpboost && !inv.recovery && !inv.insurance) {
+      const total = (inv.task_slot||0)+(inv.xpboost||0)+(inv.recovery||0)+(inv.insurance||0);
+      if (!total) {
         listEl.innerHTML += `<p style="text-align:center;color:#4a6080;font-size:0.82rem;padding:1.5rem 0;">アイテムがありません。<br>ショップで購入しよう！</p>`;
       }
     }
@@ -3976,24 +4034,21 @@
     // ===== ITEM USE HANDLERS =====
     async function handleUseXpBoost() {
       if (!currentUser) return;
+      if (isXp2xActive(currentUser.id)) { showToast('すでにXP2倍チケットが発動中です！', '#ffd700'); return; }
       if (!useFromInventory(currentUser.id, 'xpboost')) { showToast('XP 2倍チケットがありません', '#f87171'); return; }
-      if (isXp2xActive(currentUser.id)) {
-        addToInventory(currentUser.id, 'xpboost', 1); // refund
-        showToast('すでにXP2倍チケットが発動中です！', '#ffd700'); return;
-      }
-      localStorage.setItem(`saikou_xp2x_${currentUser.id}`, new Date(Date.now() + 86400000).toISOString());
+      const expiry = new Date(Date.now() + 86400000).toISOString();
+      localStorage.setItem(`saikou_xp2x_${currentUser.id}`, expiry);
+      await _syncEffectToDb('xp2x', expiry);
       renderInventoryModal(); _updateShopItemStatus && _updateShopItemStatus(); _refreshShopInvBadge();
       showToast(`⚡ XP2倍チケット発動！${getXp2xExpiryText(currentUser.id)}まで2倍！`, '#ffd700');
     }
     async function handleUseInsurance() {
       if (!currentUser) return;
+      if (isInsuranceActive(currentUser.id)) { showToast('すでにストリーク保険が発動中！', '#ff6eb4'); return; }
       if (!useFromInventory(currentUser.id, 'insurance')) { showToast('ストリーク保険がありません', '#f87171'); return; }
-      if (isInsuranceActive(currentUser.id)) {
-        addToInventory(currentUser.id, 'insurance', 1);
-        showToast('すでにストリーク保険が発動中！', '#ff6eb4'); return;
-      }
       const exp = new Date(); exp.setDate(exp.getDate() + 7); exp.setHours(23,59,59,999);
       localStorage.setItem(`saikou_insurance_${currentUser.id}`, exp.toISOString());
+      await _syncEffectToDb('insurance', exp.toISOString());
       renderInventoryModal(); _updateShopItemStatus && _updateShopItemStatus(); _refreshShopInvBadge();
       showToast(`🛡️ 7日保険発動！${exp.toLocaleDateString('ja-JP')}まで有効！`, '#ff6eb4');
     }
@@ -4140,30 +4195,30 @@
         showToast('タスクは最大10枚まで追加できます。', '#f87171');
         return;
       }
-      showItemConfirm('📋', 'タスク追加スロット', `タスク枠を${currentMax}枚 → ${currentMax + 1}枚に拡張します（永続有効）。`, cost, async () => {
-      currentStones -= cost;
-      saveStonesLocal(currentUser.id, currentStones);
-      await pushStonesToSupabase(currentUser.id, currentStones);
+      showItemConfirm('📋', 'タスク追加スロット', `タスク枠を${currentMax}枚 → ${currentMax + 1}枚に拡張します（インベントリ→使用で有効化）。`, cost, async () => {
+        currentStones -= cost;
+        saveStonesLocal(currentUser.id, currentStones);
+        await pushStonesToSupabase(currentUser.id, currentStones);
+        addToInventory(currentUser.id, 'task_slot', 1);
+        updateStoneUI(); _refreshShopInvBadge();
+        closeItemConfirm();
+        showItemAcquired('📋', 'タスク追加スロット', 1, 'インベントリから「使う」で4枚目のタスクが追加されます');
+      });
+    }
+    async function handleUseTaskSlot() {
+      if (!currentUser) return;
+      const currentMax = getMaxTasks(currentUser.id);
+      if (currentMax >= 10) { showToast('タスクは最大10枚まで追加できます。', '#f87171'); return; }
+      if (!useFromInventory(currentUser.id, 'task_slot')) { showToast('タスク追加スロットがありません', '#f87171'); return; }
       const extraSlots = getExtraTaskSlots(currentUser.id) + 1;
       localStorage.setItem(`saikou_extra_slots_${currentUser.id}`, String(extraSlots));
-      // Supabaseにも永続化（user_stonesテーブルのextra_task_slots列）
-      try {
-        const authUid = currentUser.authUserId || null;
-        if (authUid) {
-          await supabase.from('user_stones').upsert({
-            user_id: authUid,
-            amount: currentStones,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'user_id' });
-          console.log(`[TaskSlots] Supabase保存完了`);
-        }
-      } catch(e) { console.warn('[TaskSlots] Supabase save error:', e); }
-      updateStoneUI();
-      _updateShopItemStatus();
+      await _syncItemToDb('task_slot_active', extraSlots);
+      renderInventoryModal(); _updateShopItemStatus && _updateShopItemStatus(); _refreshShopInvBadge();
       renderTasks();
-      showToast(`📋 タスクスロット追加！最大${3 + extraSlots}枚に拡張！`, '#00f5ff');
-      }); // showItemConfirm callback end
+      closeInventoryModal();
+      showToast(`📋 タスクスロット有効化！最大${3 + extraSlots}枚に拡張！`, '#00f5ff');
     }
+    window.handleUseTaskSlot = handleUseTaskSlot;
 
     // ─── 7日保険 ───
     // LocalStorage: saikou_insurance_{userId} = ISO date string (期限)
@@ -8750,17 +8805,19 @@
       setInterval(checkDateChange, 60000);
       console.log('✓ 1分ごとの日付チェック開始');
       
-      // ページがフォーカスされた時に日付チェック
+      // ページがフォーカスされた時に日付チェック＋ストーン再同期
       window.addEventListener('focus', () => {
         console.log('📱 ページがアクティブになりました - 日付チェック実行');
         checkDateChange();
+        if (currentUser) loadUserStones(currentUser.id);
       });
-      
+
       // ページの可視性が変わった時にチェック（タブ切り替え時）
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
           console.log('👁️ ページが表示されました - 日付チェック実行');
           checkDateChange();
+          if (currentUser) loadUserStones(currentUser.id);
         }
       });
       
@@ -9447,8 +9504,9 @@
         updateXpUI(userId, { animate: false });
         renderStatsCard(currentUserStats);
 
-        // ── 💎 ストーン読み込み & ログインボーナスチェック ──
+        // ── 💎 ストーン読み込み & インベントリDB同期 ──
         await loadUserStones(userId);
+        await loadInventoryFromDB(); // クロスデバイス同期
         setTimeout(() => checkLoginBonusStone(userId), 800); // 画面表示後に実行
         // ── 招待された側への初回ストーンボーナス（+10💎、一度だけ）──
         setTimeout(() => checkInviteeBonusStone(userId), 1200);
