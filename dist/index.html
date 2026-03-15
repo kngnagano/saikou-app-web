@@ -2274,86 +2274,54 @@
       <p style="font-size:0.58rem;font-weight:800;letter-spacing:0.2em;color:#6a90b0;text-transform:uppercase;margin-bottom:0.65rem;">✦ アイテム交換</p>
 
       <!-- タスク追加スロット -->
-      <div style="background:linear-gradient(135deg,rgba(0,245,255,0.07),rgba(124,106,255,0.05));border:1.5px solid rgba(0,245,255,0.2);border-radius:1.25rem;padding:0.9rem;margin-bottom:0.6rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.4rem;filter:drop-shadow(0 0 6px rgba(0,245,255,0.5));">📋</span>
-            <div>
-              <p style="font-weight:900;font-size:0.82rem;color:#e0f4ff;">タスク追加スロット</p>
-              <p style="font-size:0.62rem;color:#8ba0c0;">タスク枠を+1（最大10枠）</p>
-              <p id="stonePopupTaskSlotStatus" style="font-size:0.6rem;color:#00f5ff;margin-top:2px;"></p>
-            </div>
+      <div style="background:linear-gradient(145deg,rgba(0,245,255,0.06),rgba(124,106,255,0.04));border:1.5px solid rgba(0,245,255,0.25);border-radius:1.25rem;padding:0.9rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:2rem;filter:drop-shadow(0 0 10px rgba(0,245,255,0.6));flex-shrink:0;">📋</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <span style="font-weight:900;font-size:0.88rem;color:#00f5ff;">タスク追加スロット</span>
           </div>
-          <button onclick="closeStoneInfoPopup();handleBuyTaskSlot();" style="
-            flex-shrink:0;padding:0.5rem 0.9rem;border-radius:0.875rem;
-            background:linear-gradient(135deg,#00a0c0,#7c6aff);
-            color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;
-            white-space:nowrap;box-shadow:0 2px 10px rgba(0,200,255,0.3);">
-            💎 5
-          </button>
+          <p style="font-size:0.68rem;color:#8ba0c0;line-height:1.5;">タスクを1枚追加（4枚目以降）<br>永続有効・インベントリで使用</p>
+          <p id="stonePopupTaskSlotStatus" style="font-size:0.65rem;color:#00f5ff;margin-top:3px;"></p>
         </div>
+        <button onclick="closeStoneInfoPopup();handleBuyTaskSlot();" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#006080,#00f5ff);color:#0a0d1a;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(0,245,255,0.3);white-space:nowrap;">💎 5</button>
       </div>
 
       <!-- ストリーク回復チケット -->
-      <div style="background:linear-gradient(135deg,rgba(179,157,255,0.08),rgba(0,245,255,0.05));border:1.5px solid rgba(179,157,255,0.25);border-radius:1.25rem;padding:0.9rem;margin-bottom:0.6rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.4rem;filter:drop-shadow(0 0 6px rgba(0,245,255,0.6));">🔥</span>
-            <div>
-              <p style="font-weight:900;font-size:0.82rem;color:#e0d4ff;">ストリーク回復</p>
-              <p style="font-size:0.62rem;color:#8ba0c0;">昨日の途切れを1日分補填</p>
-            </div>
-          </div>
-          <button id="popupRecoveryBtn" onclick="closeStoneInfoPopup(); executeStoneRecovery10();" style="
-            flex-shrink:0;padding:0.5rem 0.9rem;border-radius:0.875rem;
-            background:linear-gradient(135deg,#0090b0,#7c6aff);
-            color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;
-            white-space:nowrap;box-shadow:0 2px 10px rgba(0,180,204,0.3);">
-            💎 10
-          </button>
+      <div style="background:linear-gradient(145deg,rgba(179,157,255,0.06),rgba(0,245,255,0.03));border:1px solid rgba(179,157,255,0.2);border-radius:1.25rem;padding:0.9rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:2rem;filter:drop-shadow(0 0 10px rgba(179,157,255,0.6));flex-shrink:0;">🔥</div>
+        <div style="flex:1;min-width:0;">
+          <span style="font-weight:900;font-size:0.88rem;color:#b39dff;">ストリーク回復チケット</span>
+          <p style="font-size:0.68rem;color:#8ba0c0;line-height:1.5;margin-top:2px;">途切れたストリークを1日分回復<br>インベントリで使用・複数日回復可</p>
         </div>
+        <button onclick="closeStoneInfoPopup();handleBuyStreakRecovery();" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#4a3080,#b39dff);color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(179,157,255,0.3);white-space:nowrap;">💎 10</button>
       </div>
 
       <!-- XP 2倍チケット -->
-      <div style="background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,140,66,0.05));border:1.5px solid rgba(255,215,0,0.2);border-radius:1.25rem;padding:0.9rem;margin-bottom:0.6rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.4rem;filter:drop-shadow(0 0 6px rgba(255,215,0,0.5));">⚡</span>
-            <div>
-              <p style="font-weight:900;font-size:0.82rem;color:#fff4c0;">XP 2倍チケット</p>
-              <p style="font-size:0.62rem;color:#8ba0c0;">24時間 全XP・ステ 2倍</p>
-              <p id="stonePopupXp2xStatus" style="font-size:0.6rem;color:#ffd700;margin-top:2px;"></p>
-            </div>
+      <div id="stonePopupXp2xCard" style="background:linear-gradient(145deg,rgba(255,215,0,0.08),rgba(255,140,0,0.05));border:1.5px solid rgba(255,215,0,0.3);border-radius:1.25rem;padding:0.9rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:2rem;filter:drop-shadow(0 0 10px rgba(255,215,0,0.7));flex-shrink:0;">⚡</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <span style="font-weight:900;font-size:0.88rem;color:#ffd700;">XP 2倍チケット</span>
+            <span id="stonePopupXp2xBadge" style="display:none;font-size:0.55rem;background:linear-gradient(135deg,#ffd700,#ff8c42);color:#0a0d1a;padding:1px 7px;border-radius:99px;font-weight:900;">使用中</span>
           </div>
-          <button onclick="closeStoneInfoPopup();handleBuyXp2x();" style="
-            flex-shrink:0;padding:0.5rem 0.9rem;border-radius:0.875rem;
-            background:linear-gradient(135deg,#b08000,#ffd700);
-            color:#0a0d1a;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;
-            white-space:nowrap;box-shadow:0 2px 10px rgba(255,215,0,0.3);">
-            💎 20
-          </button>
+          <p style="font-size:0.68rem;color:#8ba0c0;line-height:1.5;">使用から24時間コミットXP2倍<br>インベントリで使用</p>
+          <p id="stonePopupXp2xStatus" style="font-size:0.65rem;color:#ffd700;margin-top:3px;"></p>
         </div>
+        <button onclick="closeStoneInfoPopup();handleBuyXp2x();" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#b8860b,#ffd700);color:#0a0d1a;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(255,215,0,0.3);white-space:nowrap;">💎 20</button>
       </div>
 
       <!-- 7日ストリーク保険 -->
-      <div style="background:linear-gradient(135deg,rgba(124,106,255,0.1),rgba(179,157,255,0.06));border:1.5px solid rgba(124,106,255,0.25);border-radius:1.25rem;padding:0.9rem;margin-bottom:0.75rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.4rem;filter:drop-shadow(0 0 6px rgba(124,106,255,0.5));">🛡️</span>
-            <div>
-              <p style="font-weight:900;font-size:0.82rem;color:#d4c8ff;">7日ストリーク保険</p>
-              <p style="font-size:0.62rem;color:#8ba0c0;">7日間ミスしてもストリーク維持</p>
-              <p id="stonePopupInsuranceStatus" style="font-size:0.6rem;color:#b39dff;margin-top:2px;"></p>
-            </div>
+      <div id="stonePopupInsuranceCard" style="background:linear-gradient(145deg,rgba(255,110,180,0.07),rgba(179,157,255,0.05));border:1.5px solid rgba(255,110,180,0.25);border-radius:1.25rem;padding:0.9rem 1rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:2rem;filter:drop-shadow(0 0 10px rgba(255,110,180,0.6));flex-shrink:0;">🛡️</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <span style="font-weight:900;font-size:0.88rem;color:#ff6eb4;">7日ストリーク保険</span>
+            <span id="stonePopupInsuranceBadge" style="display:none;font-size:0.55rem;background:linear-gradient(135deg,#ff6eb4,#b39dff);color:white;padding:1px 7px;border-radius:99px;font-weight:900;">発動中</span>
           </div>
-          <button onclick="closeStoneInfoPopup();handleBuyInsurance();" style="
-            flex-shrink:0;padding:0.5rem 0.9rem;border-radius:0.875rem;
-            background:linear-gradient(135deg,#5040c0,#b39dff);
-            color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;
-            white-space:nowrap;box-shadow:0 2px 10px rgba(124,106,255,0.3);">
-            💎 70
-          </button>
+          <p style="font-size:0.68rem;color:#8ba0c0;line-height:1.5;">最大7日連続でさぼってもストリーク維持<br>インベントリで使用</p>
+          <p id="stonePopupInsuranceStatus" style="font-size:0.65rem;color:#ff6eb4;margin-top:3px;"></p>
         </div>
+        <button onclick="closeStoneInfoPopup();handleBuyInsurance();" style="flex-shrink:0;padding:0.45rem 0.85rem;border-radius:0.85rem;background:linear-gradient(135deg,#8b0057,#ff6eb4);color:white;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(255,110,180,0.3);white-space:nowrap;">💎 50</button>
       </div>
 
       <!-- ストーン補充ボタン -->
@@ -5019,10 +4987,14 @@
 
           <!-- いいね・コメントボタン行 -->
           <div style="display:flex;align-items:center;gap:8px;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);">
-            <button onclick="toggleLike('${post.id}', this)" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;border:1.5px solid ${isPostLiked(post.id) ? 'rgba(255,110,180,0.7)' : 'rgba(255,110,180,0.25)'};background:${isPostLiked(post.id) ? 'rgba(255,110,180,0.25)' : 'rgba(255,110,180,0.06)'};color:#ff6eb4;font-size:0.78rem;font-weight:800;cursor:pointer;transition:all 0.2s;" data-post-id="${post.id}" data-liked="${isPostLiked(post.id) ? '1' : '0'}">
-              ❤️ <span id="likeCount_${post.id}">${post.likes_count || 0}</span>
+            <!-- ❤️ いいねボタン（トグル） -->
+            <button onclick="toggleLike('${post.id}', this)" style="display:flex;align-items:center;gap:3px;padding:4px 10px;border-radius:99px;border:1.5px solid ${isPostLiked(post.id) ? 'rgba(255,110,180,0.7)' : 'rgba(255,110,180,0.25)'};background:${isPostLiked(post.id) ? 'rgba(255,110,180,0.25)' : 'rgba(255,110,180,0.06)'};color:#ff6eb4;font-size:0.78rem;font-weight:800;cursor:pointer;transition:all 0.2s;" data-post-id="${post.id}" data-liked="${isPostLiked(post.id) ? '1' : '0'}">
+              ❤️ いいね
             </button>
-            <button onclick="showLikers('${post.id}')" style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:99px;border:1px solid rgba(255,110,180,0.15);background:transparent;color:#4a6080;font-size:0.68rem;font-weight:700;cursor:pointer;" title="いいねした人を見る">👥 見る</button>
+            <!-- いいね数 → タップで誰がいいねしたか表示 -->
+            <button onclick="showLikers('${post.id}')" style="display:flex;align-items:center;gap:3px;padding:4px 10px;border-radius:99px;border:1px solid ${(post.likes_count||0) > 0 ? 'rgba(255,110,180,0.4)' : 'rgba(255,255,255,0.08)'};background:${(post.likes_count||0) > 0 ? 'rgba(255,110,180,0.1)' : 'transparent'};color:${(post.likes_count||0) > 0 ? '#ff6eb4' : '#4a6080'};font-size:0.75rem;font-weight:800;cursor:pointer;transition:all 0.2s;" title="誰がいいねしたか見る">
+              <span id="likeCount_${post.id}">${post.likes_count || 0}</span><span style="font-size:0.65rem;margin-left:1px;">人</span>
+            </button>
             <button onclick="toggleCommentArea('${post.id}')" style="display:flex;align-items:center;gap:4px;padding:4px 12px;border-radius:99px;border:1.5px solid rgba(124,106,255,0.2);background:rgba(124,106,255,0.06);color:#8ba0c0;font-size:0.78rem;font-weight:800;cursor:pointer;transition:all 0.2s;">
               💬 <span id="cmtCount_${post.id}">0</span>
             </button>
@@ -13795,15 +13767,23 @@
         friend_achievement:   '🎉',
         friend_not_committed: '💪',
         reminder:             '⏰',
-        admin_broadcast:      '📢'
+        admin_broadcast:      '📢',
+        post_like:            '❤️',
+        post_comment:         '💬',
+        commit_streak:        '🔥',
+      };
+      const iconColors = {
+        post_like:    '#ff6eb4',
+        post_comment: '#b39dff',
       };
 
       list.innerHTML = notifications.map(n => {
         const icon    = icons[n.type] || '🔔';
         const timeAgo = fmtTime(n.created_at);
         const unread  = !n.is_read;
+        const nameColor = iconColors[n.type] || '#b39dff';
         const fromLine = n.from_name
-          ? `<p class="text-xs font-semibold mb-0.5" style="color:#b39dff;">${esc(n.from_name)}</p>`
+          ? `<p class="text-xs font-semibold mb-0.5" style="color:${nameColor};">👤 ${esc(n.from_name)}</p>`
           : '';
 
         return `
